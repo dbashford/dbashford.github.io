@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+    <title>Mimosa 2.1.4, require.js support improvements, thx r.js + esprima | DC-based web developer</title>
+    <meta name="description" content="Washington DC based Dad, UI architect, web developer and open source enthusiast. Creator of Mimosa." />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=6de410f041" />
+    <link rel="stylesheet" type="text/css" href="../assets/font-awesome-4.0.3/css/font-awesome.min.css?v=6de410f041" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Noto+Serif:400,700,400italic|Open+Sans:700,400" />
+
+
+    
+    <meta name="generator" content="Ghost 0.4" />
+<link rel="alternate" type="application/rss+xml" title="David Bashford" href="../rss/index.html">
+<link rel="canonical" href="index.html" />
+</head>
+<body class="post-template">
+
+    
+
+    
+    
+
+
+
+    <header class="site-head" >
+
+        
+        <div class="vertical">
+            <div class="site-head-content inner">
+                <a class="blog-logo" href="../index.html"><img src="../content/images/2014/Jan/dbashford_avatar.png" alt="Blog Logo" /></a>
+                <h1 class="blog-title">David Bashford</h1>
+                <h2 class="blog-description">A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.</h2>
+    	          <div class="blog-description"><a href="http://www.twitter.com/dkbashford/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>&nbsp;&nbsp;<a href="https://github.com/dbashford"><i class="fa fa-github-square fa-fw"></i></a>&nbsp;&nbsp;<a href="http://www.twitter.com/mimosajs/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>
+            </div>
+        </div>
+    </header>
+
+ 
+<main class="content" role="main">
+
+    <article class="post">
+
+        
+
+
+
+        
+        
+
+            <h1 class="post-title">Mimosa 2.1.4, require.js support improvements, thx r.js + esprima</h1>
+            <span class="post-meta">Published <time datetime="2014-02-20">February 20, 2014</time>. </span>
+            <section class="post-content">
+                <p>Mimosa <code>v2.1.4</code> brings with it something I've procrastinaed on for awhile thinking it would be much harder than it was. <code>v2.1.4</code> includes mimosa-require <code>v2.0.0</code> which vastly improves how that module determines your JavaScript code's <code>define</code> and <code>require</code> dependencies/config. </p>
+
+<p>How does it improve it?</p>
+
+<h3 id="backstory">Backstory</h3>
+
+<p>The functionality that is mimosa-require's require.js support was one of a few key reasons I built Mimosa in the first place (starting almost 2 years ago!).  Brunch didn't support AMD/require. Grunt was young, hard to configure (still is) and...just no. And there really wasn't anything else.</p>
+
+<p>I wanted something that would:</p>
+
+<ul>
+<li>validate dependency paths</li>
+<li>validate requirejs.config.paths</li>
+<li>map paths, shim and shim dependency paths, etc</li>
+<li>let me know a path is bad the second it is bad</li>
+</ul>
+
+<p>This validation alone is a huge time saver.  And it really comes in handy when reorganizing your codebase.  Move folderX to folderY then work your way through all the pathing errors mimosa-require informs you of and you are set.</p>
+
+<p>I also wanted something that could determine the "main" require.js files, build out a r.js config, run it and output the results. Ideally it would do this without a single line of config, just by being smart about how require.js works and by programmitically learning things about the code as it was processed.</p>
+
+<p>But the way mimosa-require was determining your dependencies and requirejs config was, well, it was <strong>evil</strong>.</p>
+
+<h3 id="thehack">The Hack</h3>
+
+<p>mimosa-require used <code>eval</code>.</p>
+
+<p>And I feel shame.</p>
+
+<p>Rather than try and tackle any sort of complicated parsing or regex, I decided, maybe correctly at the time, that a better, quicker way to get the information mimosa-require needed was to <code>eval</code> your JavaScript code.</p>
+
+<p>mimosa-require defined in-scope versions of <code>define</code>, <code>require</code> and <code>requirejs</code>, then <code>eval</code>ed your JavaScript.  The local version of, for instance, <code>define</code> would capture the dependency array and off it would go.  It would even treat the callback function as a string and search for embedded <code>require</code> calls in the event you were using require.js' <a href="http://requirejs.org/docs/commonjs.html">commonjs wrapper</a>.</p>
+
+<p>The fact that <code>eval</code> was there never caused problems in and of itself, but treating the code that way would.</p>
+
+<p>Everything would work great if you all your code was wrapped in <code>define</code> and <code>require</code>, and it would work great if any code outside those function calls didn't attempt to access some scope that mimosa-require's server-side <code>eval</code> wouldn't know anything about.</p>
+
+<p>But, if your code looked like this?  Trouble.</p>
+
+<pre><code>var uA = window.navigator.userAgent;  
+define(["a","b"], function(a, b) {  
+  ...
+});
+</code></pre>
+
+<p>mimosa-require would define a <code>window</code>, just to cover a lot of global variable cases, but <code>window.navigator</code> would not exist in-scope. So <code>window.navigator.userAgent</code> would throw an error and mimosa-require would be unable to do anything with this file.</p>
+
+<p>Bummer.</p>
+
+<p>It would be an even bigger bummer if this file was one of your "main" files.  mimosa-require would now not know it was a main file and it would not build the combined file.</p>
+
+<h3 id="useesprima">Use Esprima</h3>
+
+<p>I've had "require + esprima" on my ToDo list for a very long time, but I knew it would be a huge effort.  So much to parse, so many edge cases.  Ugh.</p>
+
+<p>Then <a href="https://github.com/dbashford/mimosa-require/issues/29">an issue</a> was logged against mimosa-require that had this problem at its root and I finally decided to look into it.</p>
+
+<p>While I love writing <a href="http://esprima.org/">esprima</a> AST parsing code -- for reals, its legit awesome to write -- I was not going to love writing this.</p>
+
+<h3 id="rjstotherescue">r.js to the Rescue</h3>
+
+<p>I remember shortly after I released Mimosa and mimosa-require that <a href="http://jrburke.com/">James Burke</a> the creator of require.js switched how require.js itself parses code to use Esprima. Certainly the tool mimosa-require is trying to help you use -- and that has to do all the things that mimosa-require does, just not interactively -- can provide some guidance.</p>
+
+<p>An API for this maybe?  No such luck.  And why would there be.</p>
+
+<p>But there is a <a href="https://github.com/jrburke/r.js/blob/master/build/jslib/parse.js">parse.js</a> sitting in the r.js repo.  And it does have a <a href="https://github.com/jrburke/r.js/blob/master/build/jslib/parse.js#L118"><code>parse</code></a> function.  And it does have a <a href="https://github.com/jrburke/r.js/blob/master/build/jslib/parse.js#L356"><code>findConfig</code></a> function.</p>
+
+<p>Well, that's awesome.</p>
+
+<p>It's not exposed, and it doesn't <em>quite</em> do what I need it to, but some copy paste, some minor hacking and day after I started I had ripped out the <code>eval</code> BS and replaced it with r.js' legit esprima parsing.</p>
+
+<h3 id="ugh">Ugh</h3>
+
+<p>Seriously.  That's all it took.  Copy, paste, 75 lines of code changed/removed.  I let the <strong>evil</strong> fester for an exceptionally long time because I knew it would be 1000+ lines of code to do it properly and I had a lot of other higher priorities.  For whatever reason it didn't occur to me that those 1000+ lines of code already existed.</p>
+
+<h3 id="win">Win</h3>
+
+<p>So now there are far fewer caveats to the require.js support.  mimosa-require won't run your code and it won't trip over anything.  It's using the same parsing mechanism r.js uses, so all should be right.</p>
+
+<p>So <a href="http://mimosa.io/started.html">try it out</a>.</p>
+            </section>
+            <footer class="post-footer">
+
+            </footer>
+
+        
+
+        <div id="disqus_thread"></div>
+         <script type="text/javascript">
+             var disqus_shortname = 'dbashford'; // required: replace example with your forum shortname
+             var disqus_identifier = '5'; // make sure to use the post.id as an identifier, otherwise disqus will use the pages url per default, which might be problematic...
+
+             /* * * DON'T EDIT BELOW THIS LINE * * */
+             (function() {
+                 var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                 dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                 (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+             })();
+         </script>
+         <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+         <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    </article>
+
+</main>
+
+
+    <footer class="site-footer">
+        <a class="subscribe icon-feed" href="../rss/index.html"><span class="tooltip">Subscribe!</span></a>
+        <div class="inner">
+             <section class="poweredby">Proudly published with <a class="icon-ghost" href="http://ghost.org">Ghost</a></section>
+        </div>
+    </footer>
+
+    
+    <script src="../shared/vendor/jquery/jquery.js?v=6de410f041"></script>
+
+
+    <script type="text/javascript" src="../assets/js/jquery-1.9.1.min.js?v=6de410f041"></script>
+
+    
+
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=6de410f041"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=6de410f041"></script>
+
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-47434157-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+    <title>ember.js, es6 modules, and some unfortunate transpiler behavior | DC-based web developer</title>
+    <meta name="description" content="Washington DC based Dad, UI architect, web developer and open source enthusiast. Creator of Mimosa." />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=6de410f041" />
+    <link rel="stylesheet" type="text/css" href="../assets/font-awesome-4.0.3/css/font-awesome.min.css?v=6de410f041" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Noto+Serif:400,700,400italic|Open+Sans:700,400" />
+
+
+    
+    <meta name="generator" content="Ghost 0.4" />
+<link rel="alternate" type="application/rss+xml" title="David Bashford" href="../rss/index.html">
+<link rel="canonical" href="index.html" />
+</head>
+<body class="post-template">
+
+    
+
+    
+    
+
+
+
+    <header class="site-head" >
+
+        
+        <div class="vertical">
+            <div class="site-head-content inner">
+                <a class="blog-logo" href="../index.html"><img src="../content/images/2014/Jan/dbashford_avatar.png" alt="Blog Logo" /></a>
+                <h1 class="blog-title">David Bashford</h1>
+                <h2 class="blog-description">A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.</h2>
+    	          <div class="blog-description"><a href="http://www.twitter.com/dkbashford/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>&nbsp;&nbsp;<a href="https://github.com/dbashford"><i class="fa fa-github-square fa-fw"></i></a>&nbsp;&nbsp;<a href="http://www.twitter.com/mimosajs/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>
+            </div>
+        </div>
+    </header>
+
+ 
+<main class="content" role="main">
+
+    <article class="post">
+
+        
+
+
+
+        
+        
+
+            <h1 class="post-title">ember.js, es6 modules, and some unfortunate transpiler behavior</h1>
+            <span class="post-meta">Published <time datetime="2014-03-07">March 07, 2014</time>. </span>
+            <section class="post-content">
+                <h3 id="itsembersfault">It's Ember's Fault</h3>
+
+<p>In January my team at <a href="http://bericotechnologies.com/">Berico</a> started doing a lot of work with <a href="http://emberjs.com/">Ember</a>. We'll probably have a good dozen folks writing Ember apps in the near future. Ember has a steep learning curve, but the higher up that curve we get, the happier we are with the decision. There is just a tremendous amount of power there.</p>
+
+<p>As recent Ember adopters, we've kept a close eye on the Ember community. Among other things that community has adopted is the <a href="http://wiki.ecmascript.org/doku.php?id=harmony:modules">es6 module syntax</a>. Commits <a href="https://github.com/emberjs/ember.js/pull/4374">like this</a> are frequent as the Ember codebase itself gets an es6 module overhaul. Not ones to buck a trend, at least not yet, we've adopted that syntax in our apps as well.</p>
+
+<h3 id="howtoes6module">How to es6 module?</h3>
+
+<p>Lets cover a little ground on the es6 syntax.</p>
+
+<p>This code exports some simple <em>named</em> values.</p>
+
+<pre><code>// file: hello_world.js
+var hello = "hello";  
+var world = "world";  
+export { hello, world };  
+</code></pre>
+
+<p>And this code imports those same values.  </p>
+
+<pre><code>import { hello, world } from "hello_world";  
+console.log( hello, world );  // hello world  
+</code></pre>
+
+<p>You can also <code>export</code> values without naming them using the <code>default</code> keyword.</p>
+
+<pre><code>// file: hello_world.js
+var hello = "world"  
+export default hello;  
+</code></pre>
+
+<p>And then import it giving it whatever name you wish.  </p>
+
+<pre><code>import abc from "hello_world";  
+console.log( abc );  // world  
+</code></pre>
+
+<p>If you want to <code>import</code> a file that doesn't export anything, perhaps it just runs code that attaches to window, you would write <code>import "foo"</code>.</p>
+
+<h3 id="awesomeletsusethatnow">Awesome, lets use that now!</h3>
+
+<p><img src="../content/images/es6modules1.png"> <br />
+Fail.</p>
+
+<p>It'll be quite some time before all the browsers we have to support will natively support this syntax.  Years.  </p>
+
+<p>And that's it.</p>
+
+<p>I'll totally blog about it in 2017.</p>
+
+<p>Thanks for coming!  </p>
+
+<h3 id="srsly">Srsly?</h3>
+
+<p>Nahhh. This problem, like all in life, can be transpiled away.</p>
+
+<h3 id="es6moduletranspiler">es6-module-transpiler</h3>
+
+<p>Square's <a href="https://github.com/square/es6-module-transpiler">es6-module-transpiler</a> was made to convert -- or transpile -- code using es6 module syntax into code you can actually use.  The transpiler will take in your code and compile it into either <a href="https://github.com/amdjs/amdjs-api/wiki/AMD">AMD</a> or <a href="http://wiki.commonjs.org/wiki/CommonJS">CommonJS</a>.  Lets look at some of the above code transpiled to AMD. </p>
+
+<p>These two blocks of code...</p>
+
+<pre><code>// file: hello_world.js
+var hello = "hello";  
+var world = "world";  
+export { hello, world };  
+</code></pre>
+
+<pre><code>import { hello, world } from "hello_world";  
+console.log( hello, world );  // hello world  
+</code></pre>
+
+<p>...get transpiled into these:</p>
+
+<pre><code>define(  
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    // file: hello_world.js
+    var hello = "hello";
+    var world = "world";
+    __exports__.hello = hello;
+    __exports__.world = world;
+  });
+</code></pre>
+
+<pre><code>define(  
+  ["hello_world"],
+  function(__dependency1__) {
+    "use strict";
+    var hello = __dependency1__.hello;
+    var world = __dependency1__.world;
+    console.log( hello, world );  // hello world
+  });
+</code></pre>
+
+<p>This should resemble the sort of AMD code you might write.</p>
+
+<p>Perform this transformation on your es6 module code before you load it in the browser and your require.js/AMD application will work perfectly.</p>
+
+<h3 id="howcaniuseit">How can I use it?</h3>
+
+<p>All the build tools have plugins for the es6-module-transpiler.  <a href="https://github.com/joefiorini/grunt-es6-module-transpiler">Grunt</a>. <a href="https://github.com/ryanseddon/gulp-es6-module-transpiler">Gulp</a>. <a href="https://github.com/gcollazo/es6-module-transpiler-brunch">Brunch</a>.  <a href="https://github.com/dbashford/mimosa-es6-module-transpiler">Mimosa</a>.</p>
+
+<h3 id="butwehaveaproblem">But... we have a problem</h3>
+
+<p>Starting with version <code>0.3.0</code> (its at <code>0.3.6</code> as of this writing) the es6-module-transpiler <a href="https://github.com/square/es6-module-transpiler/blob/master/TRANSITION.md#internal-changes">broke AMD apps</a>.</p>
+
+<pre><code>import Ember from 'ember';  
+var App = Ember.Application.create({});  
+export default App;  
+</code></pre>
+
+<p>This simple bit of code gets transpiled into this:</p>
+
+<pre><code>1 define(  
+2   ["ember","exports"],  
+3   function(__dependency1__, __exports__) {  
+4     "use strict";  
+5     var Ember = __dependency1__["default"];  
+6     var App = Ember.Application.create({});  
+7     __exports__["default"] = App;  
+8   });  
+</code></pre>
+
+<p>Line 5 above is the problem.  Ember is set to <code>__dependency1__["default"]</code>, which would work great if Ember had a <code>default</code> property, but it doesn't (or at least it hasn't).  Almost every other vendor library will have this same problem.  </p>
+
+<p>The transpiler expects, by way of its output, that all other modules that have <code>default</code> exports will attach that export to the <code>default</code> property. In fact, you can see the transpiler doing this on line 7. <code>__exports__["default"] = App</code> attaches <code>App</code> to the <code>default</code> property of <code>__exports__</code> such that files <code>import</code>ing this file can access it via that property. </p>
+
+<h3 id="willtheyfixit">Will they fix it?</h3>
+
+<p><a href="https://github.com/square/es6-module-transpiler/issues/69">It's looking like they won't</a>. Sad face.</p>
+
+<p><strong>Edit</strong>: So I failed to notice that the <code>compatFix</code> option was available and mentioned in that issue.  I had built a <a href="https://github.com/dbashford/mimosa-es6-module-transpiler-amd-shim">amd-shim module for Mimosa</a> not knowing the ability to fix the issue was there as a hidden option.  </p>
+
+<p>Saved!</p>
+
+<p>Lets hope that option isn't removed as some in that thread suggested should happen.</p>
+
+<h3 id="playwithit">Play with it!</h3>
+
+<p>Check out the es6-module-transpiler and Ember in <a href="https://github.com/brzpegasus/ember-repo-browser">brzpegasus' example Ember app</a>.</p>
+            </section>
+            <footer class="post-footer">
+
+            </footer>
+
+        
+
+        <div id="disqus_thread"></div>
+         <script type="text/javascript">
+             var disqus_shortname = 'dbashford'; // required: replace example with your forum shortname
+             var disqus_identifier = '6'; // make sure to use the post.id as an identifier, otherwise disqus will use the pages url per default, which might be problematic...
+
+             /* * * DON'T EDIT BELOW THIS LINE * * */
+             (function() {
+                 var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                 dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                 (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+             })();
+         </script>
+         <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+         <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    </article>
+
+</main>
+
+
+    <footer class="site-footer">
+        <a class="subscribe icon-feed" href="../rss/index.html"><span class="tooltip">Subscribe!</span></a>
+        <div class="inner">
+             <section class="poweredby">Proudly published with <a class="icon-ghost" href="http://ghost.org">Ghost</a></section>
+        </div>
+    </footer>
+
+    
+    <script src="../shared/vendor/jquery/jquery.js?v=6de410f041"></script>
+
+
+    <script type="text/javascript" src="../assets/js/jquery-1.9.1.min.js?v=6de410f041"></script>
+
+    
+
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=6de410f041"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=6de410f041"></script>
+
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-47434157-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+
+</body>
+</html>

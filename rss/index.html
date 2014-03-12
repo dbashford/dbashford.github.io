@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[David Bashford]]></title><description><![CDATA[A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.]]></description><link>http://127.0.0.1:2368/</link><generator>Ghost v0.4.0</generator><lastBuildDate>Wed, 12 Mar 2014 00:58:54 GMT</lastBuildDate><atom:link href="http://127.0.0.1:2368/rss/" rel="self" type="application/rss+xml"/><author><![CDATA[David Bashford]]></author><ttl>60</ttl><item><title><![CDATA[ember.js, es6 modules, and some unfortunate transpiler behavior]]></title><description><![CDATA[<h3 id="itsembersfault">It's Ember's Fault</h3>
+
+<p>In January my team at <a href='http://bericotechnologies.com/' >Berico</a> started doing a lot of work with <a href='http://emberjs.com/' >Ember</a>. We'll probably have a good dozen folks writing Ember apps in the near future. Ember has a steep learning curve, but the higher up that curve we get, the happier we are with the decision. There is just a tremendous amount of power there.</p>
+
+<p>As recent Ember adopters, we've kept a close eye on the Ember community. Among other things that community has adopted is the <a href='http://wiki.ecmascript.org/doku.php?id=harmony:modules' >es6 module syntax</a>. Commits <a href='https://github.com/emberjs/ember.js/pull/4374' >like this</a> are frequent as the Ember codebase itself gets an es6 module overhaul. Not ones to buck a trend, at least not yet, we've adopted that syntax in our apps as well.</p>
+
+<h3 id="howtoes6module">How to es6 module?</h3>
+
+<p>Lets cover a little ground on the es6 syntax.</p>
+
+<p>This code exports some simple <em>named</em> values.</p>
+
+<pre><code>// file: hello_world.js
+var hello = "hello";  
+var world = "world";  
+export { hello, world };  
+</code></pre>
+
+<p>And this code imports those same values.  </p>
+
+<pre><code>import { hello, world } from "hello_world";  
+console.log( hello, world );  // hello world  
+</code></pre>
+
+<p>You can also <code>export</code> values without naming them using the <code>default</code> keyword.</p>
+
+<pre><code>// file: hello_world.js
+var hello = "world"  
+export default hello;  
+</code></pre>
+
+<p>And then import it giving it whatever name you wish.  </p>
+
+<pre><code>import abc from "hello_world";  
+console.log( abc );  // world  
+</code></pre>
+
+<p>If you want to <code>import</code> a file that doesn't export anything, perhaps it just runs code that attaches to window, you would write <code>import "foo"</code>.</p>
+
+<h3 id="awesomeletsusethatnow">Awesome, lets use that now!</h3>
+
+<p><img src='http://127.0.0.1:2368/content/images/es6modules1.png' > <br />
+Fail.</p>
+
+<p>It'll be quite some time before all the browsers we have to support will natively support this syntax.  Years.  </p>
+
+<p>And that's it.</p>
+
+<p>I'll totally blog about it in 2017.</p>
+
+<p>Thanks for coming!  </p>
+
+<h3 id="srsly">Srsly?</h3>
+
+<p>Nahhh. This problem, like all in life, can be transpiled away.</p>
+
+<h3 id="es6moduletranspiler">es6-module-transpiler</h3>
+
+<p>Square's <a href='https://github.com/square/es6-module-transpiler' >es6-module-transpiler</a> was made to convert -- or transpile -- code using es6 module syntax into code you can actually use.  The transpiler will take in your code and compile it into either <a href='https://github.com/amdjs/amdjs-api/wiki/AMD' >AMD</a> or <a href='http://wiki.commonjs.org/wiki/CommonJS' >CommonJS</a>.  Lets look at some of the above code transpiled to AMD. </p>
+
+<p>These two blocks of code...</p>
+
+<pre><code>// file: hello_world.js
+var hello = "hello";  
+var world = "world";  
+export { hello, world };  
+</code></pre>
+
+<pre><code>import { hello, world } from "hello_world";  
+console.log( hello, world );  // hello world  
+</code></pre>
+
+<p>...get transpiled into these:</p>
+
+<pre><code>define(  
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    // file: hello_world.js
+    var hello = "hello";
+    var world = "world";
+    __exports__.hello = hello;
+    __exports__.world = world;
+  });
+</code></pre>
+
+<pre><code>define(  
+  ["hello_world"],
+  function(__dependency1__) {
+    "use strict";
+    var hello = __dependency1__.hello;
+    var world = __dependency1__.world;
+    console.log( hello, world );  // hello world
+  });
+</code></pre>
+
+<p>This should resemble the sort of AMD code you might write.</p>
+
+<p>Perform this transformation on your es6 module code before you load it in the browser and your require.js/AMD application will work perfectly.</p>
+
+<h3 id="howcaniuseit">How can I use it?</h3>
+
+<p>All the build tools have plugins for the es6-module-transpiler.  <a href='https://github.com/joefiorini/grunt-es6-module-transpiler' >Grunt</a>. <a href='https://github.com/ryanseddon/gulp-es6-module-transpiler' >Gulp</a>. <a href='https://github.com/gcollazo/es6-module-transpiler-brunch' >Brunch</a>.  <a href='https://github.com/dbashford/mimosa-es6-module-transpiler' >Mimosa</a>.</p>
+
+<h3 id="butwehaveaproblem">But... we have a problem</h3>
+
+<p>Starting with version <code>0.3.0</code> (its at <code>0.3.6</code> as of this writing) the es6-module-transpiler <a href='https://github.com/square/es6-module-transpiler/blob/master/TRANSITION.md' #internal-changes">broke AMD apps</a>.</p>
+
+<pre><code>import Ember from 'ember';  
+var App = Ember.Application.create({});  
+export default App;  
+</code></pre>
+
+<p>This simple bit of code gets transpiled into this:</p>
+
+<pre><code>1 define(  
+2   ["ember","exports"],  
+3   function(__dependency1__, __exports__) {  
+4     "use strict";  
+5     var Ember = __dependency1__["default"];  
+6     var App = Ember.Application.create({});  
+7     __exports__["default"] = App;  
+8   });  
+</code></pre>
+
+<p>Line 5 above is the problem.  Ember is set to <code>__dependency1__["default"]</code>, which would work great if Ember had a <code>default</code> property, but it doesn't (or at least it hasn't).  Almost every other vendor library will have this same problem.  </p>
+
+<p>The transpiler expects, by way of its output, that all other modules that have <code>default</code> exports will attach that export to the <code>default</code> property. In fact, you can see the transpiler doing this on line 7. <code>__exports__["default"] = App</code> attaches <code>App</code> to the <code>default</code> property of <code>__exports__</code> such that files <code>import</code>ing this file can access it via that property. </p>
+
+<h3 id="willtheyfixit">Will they fix it?</h3>
+
+<p><a href='https://github.com/square/es6-module-transpiler/issues/69' >It's looking like they won't</a>. Sad face.</p>
+
+<p><strong>Edit</strong>: So I failed to notice that the <code>compatFix</code> option was available and mentioned in that issue.  I had built a <a href='https://github.com/dbashford/mimosa-es6-module-transpiler-amd-shim' >amd-shim module for Mimosa</a> not knowing the ability to fix the issue was there as a hidden option.  </p>
+
+<p>Saved!</p>
+
+<p>Lets hope that option isn't removed as some in that thread suggested should happen.</p>
+
+<h3 id="playwithit">Play with it!</h3>
+
+<p>Check out the es6-module-transpiler and Ember in <a href='https://github.com/brzpegasus/ember-repo-browser' >brzpegasus' example Ember app</a>.</p>]]></description><link>http://127.0.0.1:2368/ember-es6-modules-transpiler-and-an-amd-shim/</link><guid isPermaLink="false">2f294eeb-b868-4aa5-af91-4cc0c4153da3</guid><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Sat, 08 Mar 2014 04:43:52 GMT</pubDate></item><item><title><![CDATA[Mimosa 2.1.4, require.js support improvements, thx r.js + esprima]]></title><description><![CDATA[<p>Mimosa <code>v2.1.4</code> brings with it something I've procrastinaed on for awhile thinking it would be much harder than it was. <code>v2.1.4</code> includes mimosa-require <code>v2.0.0</code> which vastly improves how that module determines your JavaScript code's <code>define</code> and <code>require</code> dependencies/config. </p>
+
+<p>How does it improve it?</p>
+
+<h3 id="backstory">Backstory</h3>
+
+<p>The functionality that is mimosa-require's require.js support was one of a few key reasons I built Mimosa in the first place (starting almost 2 years ago!).  Brunch didn't support AMD/require. Grunt was young, hard to configure (still is) and...just no. And there really wasn't anything else.</p>
+
+<p>I wanted something that would:</p>
+
+<ul>
+<li>validate dependency paths</li>
+<li>validate requirejs.config.paths</li>
+<li>map paths, shim and shim dependency paths, etc</li>
+<li>let me know a path is bad the second it is bad</li>
+</ul>
+
+<p>This validation alone is a huge time saver.  And it really comes in handy when reorganizing your codebase.  Move folderX to folderY then work your way through all the pathing errors mimosa-require informs you of and you are set.</p>
+
+<p>I also wanted something that could determine the "main" require.js files, build out a r.js config, run it and output the results. Ideally it would do this without a single line of config, just by being smart about how require.js works and by programmitically learning things about the code as it was processed.</p>
+
+<p>But the way mimosa-require was determining your dependencies and requirejs config was, well, it was <strong>evil</strong>.</p>
+
+<h3 id="thehack">The Hack</h3>
+
+<p>mimosa-require used <code>eval</code>.</p>
+
+<p>And I feel shame.</p>
+
+<p>Rather than try and tackle any sort of complicated parsing or regex, I decided, maybe correctly at the time, that a better, quicker way to get the information mimosa-require needed was to <code>eval</code> your JavaScript code.</p>
+
+<p>mimosa-require defined in-scope versions of <code>define</code>, <code>require</code> and <code>requirejs</code>, then <code>eval</code>ed your JavaScript.  The local version of, for instance, <code>define</code> would capture the dependency array and off it would go.  It would even treat the callback function as a string and search for embedded <code>require</code> calls in the event you were using require.js' <a href='http://requirejs.org/docs/commonjs.html' >commonjs wrapper</a>.</p>
+
+<p>The fact that <code>eval</code> was there never caused problems in and of itself, but treating the code that way would.</p>
+
+<p>Everything would work great if you all your code was wrapped in <code>define</code> and <code>require</code>, and it would work great if any code outside those function calls didn't attempt to access some scope that mimosa-require's server-side <code>eval</code> wouldn't know anything about.</p>
+
+<p>But, if your code looked like this?  Trouble.</p>
+
+<pre><code>var uA = window.navigator.userAgent;  
+define(["a","b"], function(a, b) {  
+  ...
+});
+</code></pre>
+
+<p>mimosa-require would define a <code>window</code>, just to cover a lot of global variable cases, but <code>window.navigator</code> would not exist in-scope. So <code>window.navigator.userAgent</code> would throw an error and mimosa-require would be unable to do anything with this file.</p>
+
+<p>Bummer.</p>
+
+<p>It would be an even bigger bummer if this file was one of your "main" files.  mimosa-require would now not know it was a main file and it would not build the combined file.</p>
+
+<h3 id="useesprima">Use Esprima</h3>
+
+<p>I've had "require + esprima" on my ToDo list for a very long time, but I knew it would be a huge effort.  So much to parse, so many edge cases.  Ugh.</p>
+
+<p>Then <a href='https://github.com/dbashford/mimosa-require/issues/29' >an issue</a> was logged against mimosa-require that had this problem at its root and I finally decided to look into it.</p>
+
+<p>While I love writing <a href='http://esprima.org/' >esprima</a> AST parsing code -- for reals, its legit awesome to write -- I was not going to love writing this.</p>
+
+<h3 id="rjstotherescue">r.js to the Rescue</h3>
+
+<p>I remember shortly after I released Mimosa and mimosa-require that <a href='http://jrburke.com/' >James Burke</a> the creator of require.js switched how require.js itself parses code to use Esprima. Certainly the tool mimosa-require is trying to help you use -- and that has to do all the things that mimosa-require does, just not interactively -- can provide some guidance.</p>
+
+<p>An API for this maybe?  No such luck.  And why would there be.</p>
+
+<p>But there is a <a href='https://github.com/jrburke/r.js/blob/master/build/jslib/parse.js' >parse.js</a> sitting in the r.js repo.  And it does have a <a href='https://github.com/jrburke/r.js/blob/master/build/jslib/parse.js' #L118"><code>parse</code></a> function.  And it does have a <a href='https://github.com/jrburke/r.js/blob/master/build/jslib/parse.js' #L356"><code>findConfig</code></a> function.</p>
+
+<p>Well, that's awesome.</p>
+
+<p>It's not exposed, and it doesn't <em>quite</em> do what I need it to, but some copy paste, some minor hacking and day after I started I had ripped out the <code>eval</code> BS and replaced it with r.js' legit esprima parsing.</p>
+
+<h3 id="ugh">Ugh</h3>
+
+<p>Seriously.  That's all it took.  Copy, paste, 75 lines of code changed/removed.  I let the <strong>evil</strong> fester for an exceptionally long time because I knew it would be 1000+ lines of code to do it properly and I had a lot of other higher priorities.  For whatever reason it didn't occur to me that those 1000+ lines of code already existed.</p>
+
+<h3 id="win">Win</h3>
+
+<p>So now there are far fewer caveats to the require.js support.  mimosa-require won't run your code and it won't trip over anything.  It's using the same parsing mechanism r.js uses, so all should be right.</p>
+
+<p>So <a href='http://mimosa.io/started.html' >try it out</a>.</p>]]></description><link>http://127.0.0.1:2368/mimosa-2-1-4-require-js-support-improvements-thx-r-js-esprima/</link><guid isPermaLink="false">e7e487d0-0546-432b-a91f-4e126a5af71a</guid><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Thu, 20 Feb 2014 15:25:03 GMT</pubDate></item><item><title><![CDATA[Making a Mimosa Module]]></title><description><![CDATA[<p>While the site has a <a href='http://mimosa.io/modules.html' >lot of documentation</a> on how modules are built with a small walk-through, I wanted to dedicate some serious attention to how easy it is to build something and get it linked into your workflow.</p>
+
+<h2 id="examplemodule">Example Module</h2>
+
+<p>A great way to learn how a module is built is to look at a real simple existing module. We'll look at the <a href='https://github.com/dbashford/mimosa-handlebars-on-window' >handlebars-on-window</a> module. The goal of that module is detect a <code>handlebars.js</code> file as it flows through Mimosa's build steps and transform the text of the file to make the <code>Handlebars</code> object visible on the <code>window</code>. If you are wondering why such a module would exist, you can check the <a href='https://github.com/dbashford/mimosa-handlebars-on-window' #why">README</a>.</p>
+
+<h2 id="filestructure">File Structure</h2>
+
+<p>This is the file structure for the <a href='https://github.com/dbashford/mimosa-handlebars-on-window' >handlebars-on-window</a> module.</p>
+
+<pre><code>/src
+  config.js
+  index.js
+.gitignore
+.npmignore
+README.md  
+mimosa-config.coffee  
+package.json  
+</code></pre>
+
+<h2 id="nonmimosafiles">Non-Mimosa Files</h2>
+
+<p>Lets knock out the simple stuff first.  These files are more about Git, NPM and node and not about Mimosa, but they are a common part of any Mimosa module.</p>
+
+<h3 id="mimosaconfigcoffee">mimosa-config.coffee</h3>
+
+<p>If you are interested in building a module, you are likely using Mimosa. This file configures Mimosa. But, don't let the presence of this file confuse you, the <code>mimosa-config</code> file has nothing to do with the Mimosa module.  A Mimosa module does not need a <code>mimosa-config</code> to <strong>be</strong> a module.</p>
+
+<p>When I built this module I wanted to make sure I ran  <a href='http://www.jshint.com/' >JSHint</a> over the project's source code to make sure the JavaScript code is idiomatic and to catch simple syntax bugs quickly. It just so happens Mimosa can do that, so I use Mimosa to run JSHint.</p>
+
+<h3 id="readmemd">README.md</h3>
+
+<p><code>README.md</code> contains the module's documentation.  How to install it, how to configure it and what its purpose is. More documentation the better! Many of the Mimosa modules have a common pattern for documentation if you care to follow it. </p>
+
+<p>The <a href='https://github.com/dbashford/mimosa-handlebars-on-window' >handlebars-on-window</a> has documentation that covers usage, functionality and configuration.</p>
+
+<h3 id="gitignore">.gitignore</h3>
+
+<p>This indicates what local files you do not want to push to your git repository.  Because Mimosa modules are node projects, using <code>.gitignore</code> to make sure you do not push the <code>node_modules</code> directory is common.</p>
+
+<h3 id="npmignore">.npmignore</h3>
+
+<p><a href='https://npmjs.org/' >NPM</a> is where you will deploy your module when you are done with it and it is how other people will get your module. As with <code>.gitignore</code> and git, <code>.npmignore</code> determines what files are not sent to NPM when you publish your module. The files that get published to NPM are the ones that get delivered when someone uses your module.</p>
+
+<p>The <code>mimosa-config</code> is a good example of something to add to the <code>.npmignore</code>.  It is only there to run JSHint during development. It isn't useful for anything else.</p>
+
+<h3 id="packagejson">package.json</h3>
+
+<p>The <code>package.json</code> configures node projects. If your module needs any other node modules (like <a href='https://github.com/ryanmcgrath/wrench-js' >wrench</a> for directory manipulation or <a href='https://github.com/mikeal/request' >request</a> for some HTTP goodness), you would declare those as <code>dependencies</code> in your <code>package.json</code>.  This file is also where you declare the name of your module, in this case <code>mimosa-handlebars-on-window</code>.</p>
+
+<p>Nodejitsu has a <a href='http://package.json.nodejitsu.com/' >great guide</a> on the <code>package.json</code>.</p>
+
+<h2 id="modulecode">Module Code</h2>
+
+<p>While some of the previous files are necessary, they don't really have anything to do with Mimosa.  The files inside <code>src</code> are where the module's code exists.</p>
+
+<p>The first thing to identify is where the module's main code is. When Mimosa uses the module, what does it use?</p>
+
+<p>The <code>package.json</code> has a property in it named <code>main</code>.</p>
+
+<pre><code>"main": "./src"  
+</code></pre>
+
+<p>This points anything using this module to module's main entry point.  In this case it is pointed at the directory <code>./src</code>.  By default, when a directory is the <code>name</code> rather than a file it means that the file to use is <code>index.js</code> inside that directory.</p>
+
+<p>And that is where we'll start.</p>
+
+<h3 id="srcindexjs">src/index.js</h3>
+
+<p>Because the <code>index.js</code> is the <code>main</code> for this NPM module, that means it is responsible for defining the interface Mimosa will use.  At the <a href='https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/index.js' #L33-L38">bottom of the index.js file</a> is a <code>module.exports</code>. </p>
+
+<pre><code>module.exports = {  
+  registration: registration,
+  defaults: config.defaults,
+  placeholder: config.placeholder,
+  validate: config.validate
+};
+</code></pre>
+
+<p>Each property in this object is a reference to a function. These four functions are the functions that Mimosa will use in order to access the module's functionality.</p>
+
+<p>Not only is <code>module.exports</code> the interface for this module, is also contains the interface Mimosa expects from its modules. For every module plugged into Mimosa, Mimosa will look to execute these specific functions and various times during a build or during <code>mimosa new</code>.</p>
+
+<p>The <code>defaults</code>, <code>placeholder</code> and <code>validate</code> functions are all inside the <code>config.js</code> file that is <code>require</code>d (imported) into <code>index.js</code>.  We'll cover those after we touch on the most important of the interface functions.</p>
+
+<h4 id="registration">registration</h4>
+
+<p>The <code>registration</code> function is how a Mimosa module hooks itself into a Mimosa build. It is the most important of all the functions, and it is only <a href='https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/index.js' #L30">one line of code</a>!</p>
+
+<pre><code>var registration = function (mc, register) {  
+  register( 
+    ['add','update','buildFile'],
+    'afterCompile', 
+    _attach, 
+    mc.extensions.javascript );
+};
+</code></pre>
+
+<p>Before digging into this code, lets refresh what this module does. It's purpose is to add the text "<code>window.Handlebars</code>" to the <code>handlebars.js</code> file. That's all. That means this module needs to process JavaScript files, capture the <code>handlebars.js</code> and update the text that is going to be written.</p>
+
+<p>This line of code <code>register</code>s files with JavaScript extensions (<code>mc.extensions.javascript</code>) to be processed by the <code>_attach</code> function (which is <a href='https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/index.js' #L6">higher up in the code</a>) after compilation has been executed (<code>afterCompile</code>) whenever a file is <code>add</code>ed, <code>update</code>d or built (<code>buildFile</code>).</p>
+
+<p>Lets break that down.</p>
+
+<h5 id="callback">Callback</h5>
+
+<p><code>_attach</code> is the callback for this registration. This is where the module's code lives. It is this code that will look for <code>handlebars.js</code> and update the text.</p>
+
+<h5 id="extensions">Extensions</h5>
+
+<p><code>mc.extensions.javascript</code> is a reference to an array of JavaScript extensions being processed by the application. By <code>register</code>ing this array of extensions, it ensures the <code>_attach</code> callback gets called only when a JavaScript file is being processed. This would include CoffeeScript files as well as JavaScript files. But it would ensure that, for instance, CSS files or images being processed by Mimosa would not trigger the <code>_attach</code> callback.</p>
+
+<p><code>mc</code> is the fully evaluated and amplified <code>mimosa-confg</code> and it is passed to the <code>registration</code> function. It includes all the configuration for all the modules, but it also includes information like the <code>extensions</code> object.</p>
+
+<p>But when does the processing of JavaScript files in the <code>_attach</code> function occur?</p>
+
+<h5 id="workflows">Workflows</h5>
+
+<p>A Mimosa workflow is a set of steps that get executed during a Mimosa command.</p>
+
+<p>The <code>buildFile</code> workflow runs during <code>mimosa build</code> and when <code>mimosa watch</code> first starts. When it first starts up, <code>mimosa watch</code> builds all the assets, but it keeps watching. <code>add</code> and <code>update</code> are executed during <code>mimosa watch</code> after initial startup when a file is added or updated. In all of these scenarios -- when building, adding or updating files -- we want the module to be checking the JavaScript files being processed to see if any of the files are <code>handlebars.js</code>.</p>
+
+<h5 id="workflowsteps">Workflow Steps</h5>
+
+<p>When a file is processed through a workflow it goes through several workflow "steps". Steps include <code>read</code> when the file is read, <code>compile</code> when the file's input text is transformed into the desired output text, and <code>write</code> when it is written. This module wants to process files during the <code>afterCompile</code> step. This ensures that the module is working with JavaScript. If this module ran <code>beforeCompile</code>, then the file's output text may not have been determined and it is the output text we want to tweak.</p>
+
+<h4 id="whenthecallbackgetscalled">When the callback gets called</h4>
+
+<p>When <code>_attach</code> gets called by Mimosa at the configured time, it gets <a href='https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/index.js' #L6">passed some information</a>.</p>
+
+<pre><code>var _attach = function ( mimosaConfig, options, next ){ ... }  
+</code></pre>
+
+<h5 id="mimosaconfig">mimosaConfig</h5>
+
+<p>The first parameter is again the full <code>mimosa-config</code> with all of the application's configuration and plenty of other goodies. What we care about is that the <code>mimosaConfig</code> contains the configuration for this module: <code>mimosaConfig.handlebarsOnWindows</code>.</p>
+
+<h5 id="options">options</h5>
+
+<p>The <code>options</code> object has information about the file being processed. It has a <code>files</code> array, <code>options.files</code>, that contains any files being processed.  Each entry in the <code>files</code> array has an <code>inputFileText</code> and an <code>outputFileText</code>. As mentioned above, this module is concerned with transforming the <code>outputFileText</code>.</p>
+
+<h5 id="next">next</h5>
+
+<p><code>next</code> is Mimosa's lifecycle callback. When the module has finished doing whatever it needs to do, it must call this callback or else Mimosa will stop processing this file.</p>
+
+<h4 id="readthecode">Read the code!</h4>
+
+<p>Armed with the information above, you should be able to read the 19 lines of code that comprise the <code>_attach</code> callback and understand what is happening.  The key part is this one line...</p>
+
+<pre><code>file.outputFileText = file.outputFileText.replace(  
+  mimosaConfig.handlebarsOnWindow.replace,
+  "window.Handlebars = " +     mimosaConfig.handlebarsOnWindow.replace );
+</code></pre>
+
+<p>This line rewrites the <code>outputFileText</code> with <code>window.Handlebars</code> inside of it.</p>
+
+<h4 id="regardingmimosaconfigandoptions">Regarding mimosaConfig and options</h4>
+
+<p>These two objects have lots of useful stuff in them. Just for curiosity's sake, you may want to <code>console.log</code> these objects just to see what is inside them.</p>
+
+<h3 id="srcconfigjs">src/config.js</h3>
+
+<p>The functions in this file are really straight forward.  They are also all optional.  If your module has no configuration, it wouldn't need this file at all.</p>
+
+<p>Remember the <code>index.js</code> looks into the <code>config.js</code> file to expose some of its functions.</p>
+
+<pre><code>module.exports = {  
+  registration: registration,
+  defaults: config.defaults,
+  placeholder: config.placeholder,
+  validate: config.validate
+};
+</code></pre>
+
+<h4 id="defaults">defaults</h4>
+
+<p><a href='https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/config.js' #L3-L10">This function</a> returns the module's default configuration. Pretty simple!</p>
+
+<pre><code>exports.defaults = function() {  
+  return {
+    handlebarsOnWindow: {
+      libName: 'handlebars.js',
+      replace: "__exports__ = Handlebars"
+    }
+  };
+};
+</code></pre>
+
+<h4 id="placeholder">placeholder</h4>
+
+<p><a href='https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/config.js' #L12-L17">This function</a> returns a string snippet that explains the default config that is placed in the <code>mimosa-config-documented.coffee</code> file during <code>mimosa new</code> and <code>mimosa config</code>.  The string it returns is commented CoffeeScript.</p>
+
+<pre><code>exports.placeholder = function() {  
+  return "\t\n\n"+
+         " # handlebarsOnWindow:\n" +
+         "   # libName: 'handlebars.js' # file name of handlebars library\n" +
+         "   # replace: '__exports__ = Handlebars' # code to prepend 'window.Handlebars = ' to\n";
+};
+</code></pre>
+
+<h4 id="validate">validate</h4>
+
+<p><a href='https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/config.js' #L19-L28">This function</a> is called by Mimosa to give the module a chance to validate its own config.</p>
+
+<pre><code>exports.validate = function(config, validators) {  
+  var errors = [];
+
+  if ( validators.ifExistsIsObject( errors, "handlebarsOnWindow config", config.handlebarsOnWindow ) ) {
+    validators.ifExistsIsString( errors, "handlebarsOnWindow.libName", config.handlebarsOnWindow.libName );
+    validators.ifExistsIsString( errors, "handlebarsOnWindow.replace", config.handlebarsOnWindow.replace );
+  }
+
+  return errors;
+};
+</code></pre>
+
+<p>If this function returns an array of strings (error messages), Mimosa will error out after printing the errors. So, if, for instance, the <code>libName</code> property wasn't a string, the <code>validate</code> function would return something like:</p>
+
+<pre><code>["handlebarsOnWindow.libName must be a string"]
+</code></pre>
+
+<p>The <code>validators</code> parameter passed in contains a set of helpful validation methods like <code>ifExistsIsString</code>.  The full set can be found in the <a href='https://github.com/dbashford/mimosa/blob/master/src/util/validators.coffee' >Mimosa source</a>.</p>
+
+<h3 id="soyouwroteamodulenowwhat">So you wrote a module, now what?</h3>
+
+<h4 id="testinglocally">Testing Locally</h4>
+
+<p>Run <code>mimosa mod:install</code> from the root of your module's directory and your Mimosa will install your module inside itself.  Now you can use your module on local projects.</p>
+
+<h4 id="putitinnpm">Put it in NPM</h4>
+
+<p>As long as your <code>package.json</code> is in working order, <code>npm publish</code> your module! And then tell the world about it (and let me know via <a href='https://twitter.com/MimosaJS' >@mimosajs</a>).</p>]]></description><link>http://127.0.0.1:2368/making-a-mimosa-module/</link><guid isPermaLink="false">9052d185-8ee6-48dc-96c0-780d4e7c24a2</guid><category><![CDATA[module]]></category><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Thu, 30 Jan 2014 04:07:02 GMT</pubDate></item><item><title><![CDATA[Mimosa 2.0 Released, 2.1 Queued Up]]></title><description><![CDATA[<p>This week <a href='http://mimosa.io/' >Mimosa 2.0</a> was released. I'm exited to get this release out as it makes Mimosa leaner, meaner, easier to reason about for its users and its maintainer, and a ton easier to maintain long-term.</p>
+
+<h3 id="compilerrefactor">Compiler Refactor</h3>
+
+<p>The biggest change with this major release is the extraction of all of Mimosa's compilers out of Mimosa's core and into separate Mimosa modules. The only drawback of this change is that you now have to list your compilers in <code>mimosa-config</code>'s <code>modules</code> array. A little less magic isn't a bad thing.</p>
+
+<p>But the advantages are many.</p>
+
+<ol>
+<li><p>It is now super easy to many compilers of your own. Before, a new compiler would have required a pull request to Mimosa. If you want to, for instance, create an <a href='https://github.com/dbashford/mimosa/issues/248' >EmberScript compiler</a> well, that just got easier. And there are bunches of existing compiler modules to use as examples.</p></li>
+<li><p>Mimosa now takes a lot less time to download. I heard more than a few times that <code>npm install</code>ing Mimosa felt a bit like you were downloading all of NPM. Yanking out the compilers reduced install time by 60-70%. As more compilers get developed Mimosa's dependency bloat would have only worsened.</p></li>
+<li><p>Maintaining and impoving compilers can now happen apart from Mimosa itself. If a single compiler gets upgraded, it won't require a new version of Mimosa to be released.</p></li>
+<li><p>Mimosa core is smaller. The smaller and more modular it gets the less time I spend working on Mimosa's core and the more time I spend building out the modules my team and those others using Mimosa need.</p></li>
+</ol>
+
+<p>Some of the old config, like <code>compilers</code> and <code>templates.handlebars</code> has been moved to their logical locations. Each compiler manages its own extensions and overrides for the compiler library if specific versions are needed.</p>
+
+<p>After having updated a dozen or so projects to <code>2.0</code> I can say that these changes generally mean less config and a config that makes more sense.</p>
+
+<p>There were plenty of other tweaks and fixes. For a comprehensive list of all that went into <code>2.0</code>, check out the <a href='https://github.com/dbashford/mimosa/blob/master/RELEASENOTES.md' >Release Notes</a>.</p>
+
+<h3 id="21">2.1</h3>
+
+<p>Work on <code>2.1</code> will start shortly and it'll be heavily logging focused. After not getting much love or attention since the beginning, there has been a lot of feedback that logging needs to get better and more flexible, <a href='https://github.com/dbashford/mimosa/issues?labels=2.1&amp;page=1&amp;state=open' >and it will</a>.</p>
+
+<h3 id="feedback">Feedback</h3>
+
+<p>I love hearing what people are doing with Mimosa and helping folks through any trouble they may have. Shoot me a note <a href='https://twitter.com/mimosajs/' >@mimosajs</a>, or hit the <a href='https://groups.google.com/forum/' #!forum/mimosajs">Google Groups</a> or just make a <a href='https://github.com/dbashford/mimosa/issues' >GitHub issue</a> to discuss what is on your mind.</p>]]></description><link>http://127.0.0.1:2368/mimosa-2-0-released-2-1-queued-up/</link><guid isPermaLink="false">785347e6-64ea-4282-bb87-dd970ae363d9</guid><category><![CDATA[mimosa]]></category><category><![CDATA[mimosarelease]]></category><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Mon, 27 Jan 2014 03:02:49 GMT</pubDate></item><item><title><![CDATA[I can see my blog from here!]]></title><description><![CDATA[<p>Always wanted to start up a dev blog and get what I'm up to down in writing. But anytime I've thought to set one up I've instead decided to hack on code. No matter the reward that might come from blogging, it'll never be as rad as hacking code.</p>
+
+<p>Hoping this will be a means to organize my thoughts, and that it will be encouragement to learn new things with enough rigor to be able to get blog entries out about them.</p>
+
+<p>Being that I'm new to this, we'll see how much I struggle with the software. After tinkering with Jekyll a bit, I landed on Ghost. One thing I didn't want this to be was a pain in the ass to manage. Setting this all up and getting it hosted on GitHub was a piece of cake. Should you be interested, check out <a href='http://docs.ghost.org/installation/' >Ghost</a> and then check out this killer <a href='http://www.metacotta.com/ghost-static-site-generation-with-buster/' >pip package called Buster</a>.</p>
+
+<p>I'm the author of <a href='http://mimosa.io/' >Mimosa</a> and <a href='https://github.com/dbashford/textract' >textract</a> so you can probably expect I'll blog heavily about things related to those tools.</p>
+
+<p>So, welcome, hope you stay awhile!</p>]]></description><link>http://127.0.0.1:2368/i-can-see-my-blog-from-here/</link><guid isPermaLink="false">df8c0693-a8a5-413d-9dcd-cea1564c11fb</guid><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Sat, 25 Jan 2014 18:58:48 GMT</pubDate></item></channel></rss>

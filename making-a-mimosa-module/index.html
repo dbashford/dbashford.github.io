@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+    <title>Making a Mimosa Module | DC-based web developer</title>
+    <meta name="description" content="Washington DC based Dad, UI architect, web developer and open source enthusiast. Creator of Mimosa." />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=6de410f041" />
+    <link rel="stylesheet" type="text/css" href="../assets/font-awesome-4.0.3/css/font-awesome.min.css?v=6de410f041" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Noto+Serif:400,700,400italic|Open+Sans:700,400" />
+
+
+    
+    <meta name="generator" content="Ghost 0.4" />
+<link rel="alternate" type="application/rss+xml" title="David Bashford" href="../rss/index.html">
+<link rel="canonical" href="index.html" />
+</head>
+<body class="post-template tag-module">
+
+    
+
+    
+    
+
+
+
+    <header class="site-head" >
+
+        
+        <div class="vertical">
+            <div class="site-head-content inner">
+                <a class="blog-logo" href="../index.html"><img src="../content/images/2014/Jan/dbashford_avatar.png" alt="Blog Logo" /></a>
+                <h1 class="blog-title">David Bashford</h1>
+                <h2 class="blog-description">A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.</h2>
+    	          <div class="blog-description"><a href="http://www.twitter.com/dkbashford/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>&nbsp;&nbsp;<a href="https://github.com/dbashford"><i class="fa fa-github-square fa-fw"></i></a>&nbsp;&nbsp;<a href="http://www.twitter.com/mimosajs/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>
+            </div>
+        </div>
+    </header>
+
+ 
+<main class="content" role="main">
+
+    <article class="post tag-module">
+
+        
+
+
+
+        
+        
+
+            <h1 class="post-title">Making a Mimosa Module</h1>
+            <span class="post-meta">Published <time datetime="2014-01-29">January 29, 2014</time>. Tags: module</span>
+            <section class="post-content">
+                <p>While the site has a <a href="http://mimosa.io/modules.html">lot of documentation</a> on how modules are built with a small walk-through, I wanted to dedicate some serious attention to how easy it is to build something and get it linked into your workflow.</p>
+
+<h2 id="examplemodule">Example Module</h2>
+
+<p>A great way to learn how a module is built is to look at a real simple existing module. We'll look at the <a href="https://github.com/dbashford/mimosa-handlebars-on-window">handlebars-on-window</a> module. The goal of that module is detect a <code>handlebars.js</code> file as it flows through Mimosa's build steps and transform the text of the file to make the <code>Handlebars</code> object visible on the <code>window</code>. If you are wondering why such a module would exist, you can check the <a href="https://github.com/dbashford/mimosa-handlebars-on-window#why">README</a>.</p>
+
+<h2 id="filestructure">File Structure</h2>
+
+<p>This is the file structure for the <a href="https://github.com/dbashford/mimosa-handlebars-on-window">handlebars-on-window</a> module.</p>
+
+<pre><code>/src
+  config.js
+  index.js
+.gitignore
+.npmignore
+README.md  
+mimosa-config.coffee  
+package.json  
+</code></pre>
+
+<h2 id="nonmimosafiles">Non-Mimosa Files</h2>
+
+<p>Lets knock out the simple stuff first.  These files are more about Git, NPM and node and not about Mimosa, but they are a common part of any Mimosa module.</p>
+
+<h3 id="mimosaconfigcoffee">mimosa-config.coffee</h3>
+
+<p>If you are interested in building a module, you are likely using Mimosa. This file configures Mimosa. But, don't let the presence of this file confuse you, the <code>mimosa-config</code> file has nothing to do with the Mimosa module.  A Mimosa module does not need a <code>mimosa-config</code> to <strong>be</strong> a module.</p>
+
+<p>When I built this module I wanted to make sure I ran  <a href="http://www.jshint.com/">JSHint</a> over the project's source code to make sure the JavaScript code is idiomatic and to catch simple syntax bugs quickly. It just so happens Mimosa can do that, so I use Mimosa to run JSHint.</p>
+
+<h3 id="readmemd">README.md</h3>
+
+<p><code>README.md</code> contains the module's documentation.  How to install it, how to configure it and what its purpose is. More documentation the better! Many of the Mimosa modules have a common pattern for documentation if you care to follow it. </p>
+
+<p>The <a href="https://github.com/dbashford/mimosa-handlebars-on-window">handlebars-on-window</a> has documentation that covers usage, functionality and configuration.</p>
+
+<h3 id="gitignore">.gitignore</h3>
+
+<p>This indicates what local files you do not want to push to your git repository.  Because Mimosa modules are node projects, using <code>.gitignore</code> to make sure you do not push the <code>node_modules</code> directory is common.</p>
+
+<h3 id="npmignore">.npmignore</h3>
+
+<p><a href="https://npmjs.org/">NPM</a> is where you will deploy your module when you are done with it and it is how other people will get your module. As with <code>.gitignore</code> and git, <code>.npmignore</code> determines what files are not sent to NPM when you publish your module. The files that get published to NPM are the ones that get delivered when someone uses your module.</p>
+
+<p>The <code>mimosa-config</code> is a good example of something to add to the <code>.npmignore</code>.  It is only there to run JSHint during development. It isn't useful for anything else.</p>
+
+<h3 id="packagejson">package.json</h3>
+
+<p>The <code>package.json</code> configures node projects. If your module needs any other node modules (like <a href="https://github.com/ryanmcgrath/wrench-js">wrench</a> for directory manipulation or <a href="https://github.com/mikeal/request">request</a> for some HTTP goodness), you would declare those as <code>dependencies</code> in your <code>package.json</code>.  This file is also where you declare the name of your module, in this case <code>mimosa-handlebars-on-window</code>.</p>
+
+<p>Nodejitsu has a <a href="http://package.json.nodejitsu.com/">great guide</a> on the <code>package.json</code>.</p>
+
+<h2 id="modulecode">Module Code</h2>
+
+<p>While some of the previous files are necessary, they don't really have anything to do with Mimosa.  The files inside <code>src</code> are where the module's code exists.</p>
+
+<p>The first thing to identify is where the module's main code is. When Mimosa uses the module, what does it use?</p>
+
+<p>The <code>package.json</code> has a property in it named <code>main</code>.</p>
+
+<pre><code>"main": "./src"  
+</code></pre>
+
+<p>This points anything using this module to module's main entry point.  In this case it is pointed at the directory <code>./src</code>.  By default, when a directory is the <code>name</code> rather than a file it means that the file to use is <code>index.js</code> inside that directory.</p>
+
+<p>And that is where we'll start.</p>
+
+<h3 id="srcindexjs">src/index.js</h3>
+
+<p>Because the <code>index.js</code> is the <code>main</code> for this NPM module, that means it is responsible for defining the interface Mimosa will use.  At the <a href="https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/index.js#L33-L38">bottom of the index.js file</a> is a <code>module.exports</code>. </p>
+
+<pre><code>module.exports = {  
+  registration: registration,
+  defaults: config.defaults,
+  placeholder: config.placeholder,
+  validate: config.validate
+};
+</code></pre>
+
+<p>Each property in this object is a reference to a function. These four functions are the functions that Mimosa will use in order to access the module's functionality.</p>
+
+<p>Not only is <code>module.exports</code> the interface for this module, is also contains the interface Mimosa expects from its modules. For every module plugged into Mimosa, Mimosa will look to execute these specific functions and various times during a build or during <code>mimosa new</code>.</p>
+
+<p>The <code>defaults</code>, <code>placeholder</code> and <code>validate</code> functions are all inside the <code>config.js</code> file that is <code>require</code>d (imported) into <code>index.js</code>.  We'll cover those after we touch on the most important of the interface functions.</p>
+
+<h4 id="registration">registration</h4>
+
+<p>The <code>registration</code> function is how a Mimosa module hooks itself into a Mimosa build. It is the most important of all the functions, and it is only <a href="https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/index.js#L30">one line of code</a>!</p>
+
+<pre><code>var registration = function (mc, register) {  
+  register( 
+    ['add','update','buildFile'],
+    'afterCompile', 
+    _attach, 
+    mc.extensions.javascript );
+};
+</code></pre>
+
+<p>Before digging into this code, lets refresh what this module does. It's purpose is to add the text "<code>window.Handlebars</code>" to the <code>handlebars.js</code> file. That's all. That means this module needs to process JavaScript files, capture the <code>handlebars.js</code> and update the text that is going to be written.</p>
+
+<p>This line of code <code>register</code>s files with JavaScript extensions (<code>mc.extensions.javascript</code>) to be processed by the <code>_attach</code> function (which is <a href="https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/index.js#L6">higher up in the code</a>) after compilation has been executed (<code>afterCompile</code>) whenever a file is <code>add</code>ed, <code>update</code>d or built (<code>buildFile</code>).</p>
+
+<p>Lets break that down.</p>
+
+<h5 id="callback">Callback</h5>
+
+<p><code>_attach</code> is the callback for this registration. This is where the module's code lives. It is this code that will look for <code>handlebars.js</code> and update the text.</p>
+
+<h5 id="extensions">Extensions</h5>
+
+<p><code>mc.extensions.javascript</code> is a reference to an array of JavaScript extensions being processed by the application. By <code>register</code>ing this array of extensions, it ensures the <code>_attach</code> callback gets called only when a JavaScript file is being processed. This would include CoffeeScript files as well as JavaScript files. But it would ensure that, for instance, CSS files or images being processed by Mimosa would not trigger the <code>_attach</code> callback.</p>
+
+<p><code>mc</code> is the fully evaluated and amplified <code>mimosa-confg</code> and it is passed to the <code>registration</code> function. It includes all the configuration for all the modules, but it also includes information like the <code>extensions</code> object.</p>
+
+<p>But when does the processing of JavaScript files in the <code>_attach</code> function occur?</p>
+
+<h5 id="workflows">Workflows</h5>
+
+<p>A Mimosa workflow is a set of steps that get executed during a Mimosa command.</p>
+
+<p>The <code>buildFile</code> workflow runs during <code>mimosa build</code> and when <code>mimosa watch</code> first starts. When it first starts up, <code>mimosa watch</code> builds all the assets, but it keeps watching. <code>add</code> and <code>update</code> are executed during <code>mimosa watch</code> after initial startup when a file is added or updated. In all of these scenarios -- when building, adding or updating files -- we want the module to be checking the JavaScript files being processed to see if any of the files are <code>handlebars.js</code>.</p>
+
+<h5 id="workflowsteps">Workflow Steps</h5>
+
+<p>When a file is processed through a workflow it goes through several workflow "steps". Steps include <code>read</code> when the file is read, <code>compile</code> when the file's input text is transformed into the desired output text, and <code>write</code> when it is written. This module wants to process files during the <code>afterCompile</code> step. This ensures that the module is working with JavaScript. If this module ran <code>beforeCompile</code>, then the file's output text may not have been determined and it is the output text we want to tweak.</p>
+
+<h4 id="whenthecallbackgetscalled">When the callback gets called</h4>
+
+<p>When <code>_attach</code> gets called by Mimosa at the configured time, it gets <a href="https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/index.js#L6">passed some information</a>.</p>
+
+<pre><code>var _attach = function ( mimosaConfig, options, next ){ ... }  
+</code></pre>
+
+<h5 id="mimosaconfig">mimosaConfig</h5>
+
+<p>The first parameter is again the full <code>mimosa-config</code> with all of the application's configuration and plenty of other goodies. What we care about is that the <code>mimosaConfig</code> contains the configuration for this module: <code>mimosaConfig.handlebarsOnWindows</code>.</p>
+
+<h5 id="options">options</h5>
+
+<p>The <code>options</code> object has information about the file being processed. It has a <code>files</code> array, <code>options.files</code>, that contains any files being processed.  Each entry in the <code>files</code> array has an <code>inputFileText</code> and an <code>outputFileText</code>. As mentioned above, this module is concerned with transforming the <code>outputFileText</code>.</p>
+
+<h5 id="next">next</h5>
+
+<p><code>next</code> is Mimosa's lifecycle callback. When the module has finished doing whatever it needs to do, it must call this callback or else Mimosa will stop processing this file.</p>
+
+<h4 id="readthecode">Read the code!</h4>
+
+<p>Armed with the information above, you should be able to read the 19 lines of code that comprise the <code>_attach</code> callback and understand what is happening.  The key part is this one line...</p>
+
+<pre><code>file.outputFileText = file.outputFileText.replace(  
+  mimosaConfig.handlebarsOnWindow.replace,
+  "window.Handlebars = " +     mimosaConfig.handlebarsOnWindow.replace );
+</code></pre>
+
+<p>This line rewrites the <code>outputFileText</code> with <code>window.Handlebars</code> inside of it.</p>
+
+<h4 id="regardingmimosaconfigandoptions">Regarding mimosaConfig and options</h4>
+
+<p>These two objects have lots of useful stuff in them. Just for curiosity's sake, you may want to <code>console.log</code> these objects just to see what is inside them.</p>
+
+<h3 id="srcconfigjs">src/config.js</h3>
+
+<p>The functions in this file are really straight forward.  They are also all optional.  If your module has no configuration, it wouldn't need this file at all.</p>
+
+<p>Remember the <code>index.js</code> looks into the <code>config.js</code> file to expose some of its functions.</p>
+
+<pre><code>module.exports = {  
+  registration: registration,
+  defaults: config.defaults,
+  placeholder: config.placeholder,
+  validate: config.validate
+};
+</code></pre>
+
+<h4 id="defaults">defaults</h4>
+
+<p><a href="https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/config.js#L3-L10">This function</a> returns the module's default configuration. Pretty simple!</p>
+
+<pre><code>exports.defaults = function() {  
+  return {
+    handlebarsOnWindow: {
+      libName: 'handlebars.js',
+      replace: "__exports__ = Handlebars"
+    }
+  };
+};
+</code></pre>
+
+<h4 id="placeholder">placeholder</h4>
+
+<p><a href="https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/config.js#L12-L17">This function</a> returns a string snippet that explains the default config that is placed in the <code>mimosa-config-documented.coffee</code> file during <code>mimosa new</code> and <code>mimosa config</code>.  The string it returns is commented CoffeeScript.</p>
+
+<pre><code>exports.placeholder = function() {  
+  return "\t\n\n"+
+         " # handlebarsOnWindow:\n" +
+         "   # libName: 'handlebars.js' # file name of handlebars library\n" +
+         "   # replace: '__exports__ = Handlebars' # code to prepend 'window.Handlebars = ' to\n";
+};
+</code></pre>
+
+<h4 id="validate">validate</h4>
+
+<p><a href="https://github.com/dbashford/mimosa-handlebars-on-window/blob/master/src/config.js#L19-L28">This function</a> is called by Mimosa to give the module a chance to validate its own config.</p>
+
+<pre><code>exports.validate = function(config, validators) {  
+  var errors = [];
+
+  if ( validators.ifExistsIsObject( errors, "handlebarsOnWindow config", config.handlebarsOnWindow ) ) {
+    validators.ifExistsIsString( errors, "handlebarsOnWindow.libName", config.handlebarsOnWindow.libName );
+    validators.ifExistsIsString( errors, "handlebarsOnWindow.replace", config.handlebarsOnWindow.replace );
+  }
+
+  return errors;
+};
+</code></pre>
+
+<p>If this function returns an array of strings (error messages), Mimosa will error out after printing the errors. So, if, for instance, the <code>libName</code> property wasn't a string, the <code>validate</code> function would return something like:</p>
+
+<pre><code>["handlebarsOnWindow.libName must be a string"]
+</code></pre>
+
+<p>The <code>validators</code> parameter passed in contains a set of helpful validation methods like <code>ifExistsIsString</code>.  The full set can be found in the <a href="https://github.com/dbashford/mimosa/blob/master/src/util/validators.coffee">Mimosa source</a>.</p>
+
+<h3 id="soyouwroteamodulenowwhat">So you wrote a module, now what?</h3>
+
+<h4 id="testinglocally">Testing Locally</h4>
+
+<p>Run <code>mimosa mod:install</code> from the root of your module's directory and your Mimosa will install your module inside itself.  Now you can use your module on local projects.</p>
+
+<h4 id="putitinnpm">Put it in NPM</h4>
+
+<p>As long as your <code>package.json</code> is in working order, <code>npm publish</code> your module! And then tell the world about it (and let me know via <a href="https://twitter.com/MimosaJS">@mimosajs</a>).</p>
+            </section>
+            <footer class="post-footer">
+
+            </footer>
+
+        
+
+        <div id="disqus_thread"></div>
+         <script type="text/javascript">
+             var disqus_shortname = 'dbashford'; // required: replace example with your forum shortname
+             var disqus_identifier = '4'; // make sure to use the post.id as an identifier, otherwise disqus will use the pages url per default, which might be problematic...
+
+             /* * * DON'T EDIT BELOW THIS LINE * * */
+             (function() {
+                 var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                 dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                 (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+             })();
+         </script>
+         <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+         <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    </article>
+
+</main>
+
+
+    <footer class="site-footer">
+        <a class="subscribe icon-feed" href="../rss/index.html"><span class="tooltip">Subscribe!</span></a>
+        <div class="inner">
+             <section class="poweredby">Proudly published with <a class="icon-ghost" href="http://ghost.org">Ghost</a></section>
+        </div>
+    </footer>
+
+    
+    <script src="../shared/vendor/jquery/jquery.js?v=6de410f041"></script>
+
+
+    <script type="text/javascript" src="../assets/js/jquery-1.9.1.min.js?v=6de410f041"></script>
+
+    
+
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=6de410f041"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=6de410f041"></script>
+
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-47434157-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+
+</body>
+</html>
