@@ -1,5 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[David Bashford]]></title><description><![CDATA[A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.]]></description><link>http://127.0.0.1:2368/</link><generator>Ghost v0.4.0</generator><lastBuildDate>Wed, 12 Mar 2014 00:58:54 GMT</lastBuildDate><atom:link href="http://127.0.0.1:2368/rss/" rel="self" type="application/rss+xml"/><author><![CDATA[David Bashford]]></author><ttl>60</ttl><item><title><![CDATA[ember.js, es6 modules, and some unfortunate transpiler behavior]]></title><description><![CDATA[<h3 id="itsembersfault">It's Ember's Fault</h3>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[David Bashford]]></title><description><![CDATA[A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.]]></description><link>http://127.0.0.1:2368/</link><generator>Ghost v0.4.0</generator><lastBuildDate>Fri, 14 Mar 2014 16:22:18 GMT</lastBuildDate><atom:link href="http://127.0.0.1:2368/rss/" rel="self" type="application/rss+xml"/><author><![CDATA[David Bashford]]></author><ttl>60</ttl><item><title><![CDATA[Using React with Backbone/Require.js/Bower/Mimosa, 1 line of config]]></title><description><![CDATA[<p>This week I rolled out a <a href='https://github.com/dbashford/mimosa-react' >React compiler</a> for <a href='http://mimosa.io/' >Mimosa</a>. To show off how well the Mimosa and <a href='https://github.com/facebook/react' >React</a> play together, and how easy it is to get started, I put a <a href='https://github.com/dbashford/MimosaReactBackboneTodoList' >demo Todo app</a> together, because, lets face it, its not a thing unless there's a Todo app.</p>
+
+<p>The <a href='https://github.com/dbashford/MimosaReactBackboneTodoList' >demo Todo app</a> is a Backbone project that uses React for views,  Require.js for module loading and Bower for dependency management. That is all managed by Mimosa, the build tool, which also kicks in server support, live reload, JSX compiling, JSHinting, concatenation and minification.</p>
+
+<h2 id="backingupreact">Backing up, React</h2>
+
+<p>I was in attendance at <a href='http://2013.jsconf.us/' >JSConf 2013</a> when React was introduced.  It was immediately ripped apart by the folks in the room.  Twitter was red with the blood of a fresh new UI framework victim.  The critiques can be boiled down to "Is that... XML embedded within JavaScript? OMG, die".</p>
+
+<p>Since then, React has not gone away.  It's gathered together over 5000 stargazers on GitHub and the buzz has increased.</p>
+
+<p>So, why?  Facebook threw up a <a href='http://facebook.github.io/react/blog/2013/06/05/why-react.html' >blog post</a> on "why react", and one of the key reasons is...</p>
+
+<h2 id="speedbabyspeed">Speed, Baby, Speed</h2>
+
+<p>Rather than screw up an explanation, here's the important part from the "why react" blog post.</p>
+
+<blockquote>
+  <p>When your component is first initialized, the render method is called, generating a lightweight representation of your view. From that representation, a string of markup is produced, and injected into the document. When your data changes, the render method is called again. In order to perform updates as efficiently as possible, we diff the return value from the previous call to render with the new one, and generate a minimal set of changes to be applied to the DOM.</p>
+</blockquote>
+
+<p>It's the diff that is the win.  And at least until <a href='https://github.com/tildeio/htmlbars' >HTMLBars</a> comes out, it seems to be the big speed winner.</p>
+
+<h2 id="anditsjusttheview">And its just the View</h2>
+
+<p>Again, quoting React:</p>
+
+<blockquote>
+  <p>Lots of people use React as the V in MVC. Since React makes no assumptions about the rest of your technology stack, it's easy to try it out on a small feature in an existing project.</p>
+</blockquote>
+
+<p>React blends nicely with your existing stack as the View, especially if your UI stack doesn't place a hard dependency on its View layer. Like, for instance, if you are using...</p>
+
+<h2 id="backbone">Backbone</h2>
+
+<p>Backbone needs no introduction, but unlike some of the other leading client-side frameworks, Backbone places no limitation on your templating language. Underscore, Dust, Handlebars, whatever.</p>
+
+<p>What you lose is tight integration and data-binding for free (unless you are using, say, <a href='http://www.ractivejs.org/' >Ractive</a> for your templating solution).</p>
+
+<p>Backbone's loose coupling and React play together nicely.  Instagram is, for instance, "a 'single page' web app built entirely with React and Backbone.Router."</p>
+
+<p>The popular <a href='http://todomvc.com/' >TodoMVC site</a> has a great <a href='http://todomvc.com/labs/architecture-examples/react-backbone/' >example of using Backbone and React together</a>.</p>
+
+<h2 id="xmlinyourjs">XML in your JS</h2>
+
+<p>One of the chief concerns with React is all the <a href='http://facebook.github.io/react/docs/jsx-in-depth.html' >XML in your JavaScript</a>.  Facebook calls it JSX.</p>
+
+<pre><code>var HelloMessage = React.createClass({  
+  render: function() {
+    return &lt;div&gt;Hello {this.props.name}&lt;/div&gt;;
+  }
+});
+</code></pre>
+
+<p>Yeah, so, maybe count me in the group of folks who is sort of put off by that. I just spent the better part of a decade hammering home to junior developers that markup in your JavaScript is bad. But its probably something I can get used to, probably.</p>
+
+<p>Anyone looking at that might also realize that every JavaScript runtime they know of will not be happy with that.</p>
+
+<p>So, as you probably would expect, that code needs to be compiled/transpiled.</p>
+
+<h2 id="compilingjsx">Compiling JSX</h2>
+
+<p>In the <a href='http://todomvc.com/labs/architecture-examples/react-backbone/' >Backbone/React Todo example</a> a <a href='http://todomvc.com/labs/architecture-examples/react-backbone/bower_components/react/JSXTransformer.js' >library loaded in the browser</a> performs the compiling.  But we all know that's not a good idea.  It works great for demos, but it won't for your app.</p>
+
+<p>Facebook created <a href='https://www.npmjs.org/package/react-tools' >react-tools</a> which can, among other things, be used to compile JSX on the server.</p>
+
+<h2 id="mimosareact">mimosa-react</h2>
+
+<p>I created the <a href='https://github.com/dbashford/mimosa-react' >JSX/React compiler for Mimosa</a> specifically to wrap react-tools and allow Mimosa devs to compile <code>.jsx</code> on the fly. As with all the other Mimosa compilers, when you are running <code>mimosa watch</code> Mimosa will recompile your <code>.jsx</code> and if you are using live-reload, refresh your page immediately.</p>
+
+<h2 id="mimosareacttodoapp">Mimosa React Todo App</h2>
+
+<p>To show the compiler off, but also to show React working within a larger, more fully-featured Mimosa application I started with the TodoMVC example and made the <a href='https://github.com/dbashford/MimosaReactBackboneTodoList' >MimosaReactBackboneTodo demo app</a>.</p>
+
+<p>Here's the config for the Todo app. No other config is needed.</p>
+
+<pre><code>  "modules": [
+    "copy",
+    "server",
+    "jshint",
+    "require",
+    "minify-js",
+    "minify-css",
+    "minify-img",
+    "live-reload",
+    "bower",
+    "react"
+  ]
+</code></pre>
+
+<p>This gives you...</p>
+
+<ul>
+<li>React compiling</li>
+<li>jshinting of compiled JavaScript</li>
+<li>concatenation via r.js</li>
+<li>minification of JavaScript, CSS and images</li>
+<li>bower support</li>
+<li>require.js support like path verification</li>
+<li>live-reload</li>
+<li>hooks into the node server that comes with the project.</li>
+</ul>
+
+<h2 id="giveitatry">Give it a try!</h2>
+
+<ol>
+<li><code>npm install -g mimosa</code>  </li>
+<li><code>git clone https://github.com/dbashford/MimosaReactBackboneTodoList react</code>  </li>
+<li><code>cd react</code>  </li>
+<li><code>mimosa watch --server</code> or <code>mimosa watch -s</code>  </li>
+<li>Open <a href='http://localhost:3000/' >localhost:3000</a></li>
+</ol>]]></description><link>http://127.0.0.1:2368/using-react-with-backbonerequire-jsbowermimosa-1-line-of-config/</link><guid isPermaLink="false">dcb6c398-4f70-4706-b28a-c173b2f0838f</guid><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Fri, 14 Mar 2014 16:15:54 GMT</pubDate></item><item><title><![CDATA[ember.js, es6 modules, and some unfortunate transpiler behavior]]></title><description><![CDATA[<h3 id="itsembersfault">It's Ember's Fault</h3>
 
 <p>In January my team at <a href='http://bericotechnologies.com/' >Berico</a> started doing a lot of work with <a href='http://emberjs.com/' >Ember</a>. We'll probably have a good dozen folks writing Ember apps in the near future. Ember has a steep learning curve, but the higher up that curve we get, the happier we are with the decision. There is just a tremendous amount of power there.</p>
 
