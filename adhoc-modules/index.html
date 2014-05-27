@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+    <title>Adhoc Modules: Custom Tasks & Baby Steps Towards Publishing Modules | DC-based web developer</title>
+    <meta name="description" content="Washington DC based Dad, UI architect, web developer and open source enthusiast. Creator of Mimosa." />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=b18736de91" />
+    <link rel="stylesheet" type="text/css" href="../assets/font-awesome-4.0.3/css/font-awesome.min.css?v=b18736de91" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Noto+Serif:400,700,400italic|Open+Sans:700,400" />
+
+
+    
+    <meta name="generator" content="Ghost 0.4" />
+<link rel="alternate" type="application/rss+xml" title="David Bashford" href="../rss/index.html">
+<link rel="canonical" href="index.html" />
+</head>
+<body class="post-template">
+
+    
+
+    
+    
+
+
+
+    <header class="site-head" >
+
+        
+        <div class="vertical">
+            <div class="site-head-content inner">
+                <a class="blog-logo" href="../index.html"><img src="../content/images/2014/Jan/dbashford_avatar.png" alt="Blog Logo" /></a>
+                <h1 class="blog-title">David Bashford</h1>
+                <h2 class="blog-description">A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.</h2>
+    	          <div class="blog-description"><a href="http://www.twitter.com/dkbashford/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>&nbsp;&nbsp;<a href="https://github.com/dbashford"><i class="fa fa-github-square fa-fw"></i></a>&nbsp;&nbsp;<a href="http://www.twitter.com/mimosajs/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>
+            </div>
+        </div>
+    </header>
+
+ 
+<main class="content" role="main">
+
+    <article class="post">
+
+        
+
+
+
+        
+        
+
+            <h1 class="post-title">Adhoc Modules: Custom Tasks & Baby Steps Towards Publishing Modules</h1>
+            <span class="post-meta">Published <time datetime="2014-05-27">May 27, 2014</time>. </span>
+            <section class="post-content">
+                <p>The <a href="https://github.com/dbashford/mimosa-adhoc-module">adhoc-module</a> Mimosa module is real easy to use and makes adding custom build behavior a piece of cake.  It is also a <strong>great</strong> gateway to learning how to build Mimosa modules that you wish to deploy to NPM for community use.</p>
+
+<h2 id="needtrulycustombehaviorinyourbuild">Need Truly Custom Behavior in Your Build?</h2>
+
+<p>Need some really specific functionality built into your Mimosa build?  Maybe you need to do some install-time code manipulating.  Or maybe you need to be able to swap out values of JavaScript properties based on your target environment.  Possibly you have a deployable product and you need each deploy to vary slightly (different skin?) and you'd love Mimosa to handle that for you.</p>
+
+<p>Until recently, you had three options:</p>
+
+<ol>
+<li>You could hope the task you need to perform was available as a module already.  Most modules, though, are meant to be general in their function.  So you might strike out quickly here.  </li>
+<li>You could create your own module and stick it in NPM. That may not be desirable for you, though.  You may not want to have to maintain it, and you may not want to expose any of what you might be doing at work in the form of a module.  </li>
+<li>You could create a module locally, in your project or within your company's code repos, and <code>mimosa mod:install</code> it.  This introduces another build step, though.  Now all your developers have to make sure to <code>mod:install</code> a specific piece of code.  And it means you may have another repo to manage.</li>
+</ol>
+
+<h2 id="entertheadhocmodule">Enter the Adhoc Module</h2>
+
+<p>The <a href="https://github.com/dbashford/mimosa-adhoc-module">adhoc-module</a> was released recently and it allows you to create modules within your code base and <code>require</code> them right into your project.</p>
+
+<p>This module has a dead simple config:</p>
+
+<pre><code>adhocModule: {  
+  modules: []
+}
+</code></pre>
+
+<p>The <code>modules</code> array should contain <code>require</code>d in stripped-down mimosa modules. </p>
+
+<p>You would include adhoc modules like this:</p>
+
+<pre><code>adhocModule: {  
+  modules: [
+      require('./scripts/perform-transforms'),
+    require('./scripts/deploy-to-heroku')
+  ]
+}
+</code></pre>
+
+<p>The paths above point at node code in the <code>./scripts</code> directory. That code must expose a <code>registration</code> function that serves the exact same function as the <code>registration</code> function of any module you have plugged into your project.</p>
+
+<p>In the case above, two modules are included. You can add as many as you wish.</p>
+
+<h2 id="whatisregistration">What is <code>registration</code>?</h2>
+
+<p>For a complete rundown of how <code>registration</code> works, check the <a href="http://dbashford.github.io/making-a-mimosa-module/index.html">blog post on creating modules</a>. That post is much larger in scope, though, so you may just want to keep reading, I'll cover it here in brief.</p>
+
+<p>The <code>registration</code> function exposed by your adhoc modules is called as Mimosa is first starting up.  It is a Mimosa module's (and adhoc module's) means to associate the execution of some code with a specific step in a Mimosa build.</p>
+
+<p>The <code>registration</code> function is passed the <code>mimosaConfig</code> which contains the full configuration for your project's Mimosa process, including anything you've included in your own <code>mimosa-config.js/coffee</code>.  The <code>registration</code> function is also passed a <code>register</code> function which when executed with the right parameters will notify Mimosa that it needs to call your code at a given point in Mimosa's processing.</p>
+
+<p><code>register</code> takes 4 parameters and when executed it plugs your code into the right place in Mimosa's processing.</p>
+
+<ul>
+<li>The 1st parameter tells Mimosa during which build workflow the passed callback (3rd parameter) should be executed.  The <a href="http://mimosa.io/modules.html#create">Mimosa web site</a> covers all the various build workflows. Workflows include <code>add</code>/<code>update</code>/<code>remove</code>, <code>buildFile</code>, <code>buildDone</code>, and so on.</li>
+<li>The 2nd parameter tells Mimosa what step during the workflow to execute the callback.  Each workflow has a set of steps like <code>beforeRead</code>, <code>afterCompile</code>, and <code>package</code>. The complete set of workflow/steps can be seen by <a href="https://github.com/dbashford/mimosa/blob/master/src/util/workflow.coffee#L19-L30">checking out the code</a>.</li>
+<li>The 3rd parameter is the callback.  This should be a reference to a JavaScript function that contains the code you want to execute at the specific build workflow and build step.  The callback is passed the <code>mimosaConfig</code>, an <code>options</code> object that contains information any files being currently processed, and a callback that is to be called when the module has finished its task.</li>
+<li>The 4th parameter is optional.  If your adhoc module is meant to process individual files, like JavaScript files, this parameter is your chance to make sure that your callback is only called with the right files.  This parameter is an array of file extensions.  Ex: <code>['html','htm']</code>.</li>
+</ul>
+
+<h2 id="usingregistration">Using <code>registration</code></h2>
+
+<p>At my day job we use adhoc modules extensively. Here's a quick <code>registration</code> function for one of our adhoc modules.</p>
+
+<pre><code>var _execute = function( mimosaConfig, options, next ) {  
+  // do something
+  next();
+};
+
+var _clean = ...
+
+exports.registration = function( mimosaConfig, register ) {  
+  if ( mimosaConfig.isBuild &amp;&amp; mimosaConfig.isPackage ) {
+    register( ["postBuild"], "beforeInstall", _execute );
+  }
+  register( ['preClean'], 'init', _clean );
+};
+</code></pre>
+
+<p>You can see the <code>registration</code> function is only concerned with executing its code if the current process is a build (<code>mimosa build</code>) and if the <code>--package</code> flag has been used. In this case the <code>_execute</code> function is called during the <code>beforeInstall</code> step. This particular module (code omitted) performs transformations on server templates prior to deployment. Server-side code isn't usually in Mimosa's wheelhouse, but there's nothing stopping a Mimosa module from reading from the file system, making changes and writing back.</p>
+
+<p>This particular module also registers for the <code>preClean</code> step during which any assets it may have been responsible for writing during the <code>postBuild</code> step can be cleaned up.</p>
+
+<h2 id="useittolearnhowtobuildmodules">Use it to Learn How to Build Modules!</h2>
+
+<p>Using adhoc-modules locally is a <strong>great</strong> way to learn how to build larger modules that you may intend to distribute. It's super easy to get started.</p>
+
+<p>Just toss some code in a directory in your app, add <code>adhoc-module</code> to your node modules, wire up the config and you are off and running.  The hardest part to master is determining when to run your code. A little trial-and-error, printing out the <code>options</code> object will help out there.</p>
+            </section>
+            <footer class="post-footer">
+
+            </footer>
+
+        
+
+        <div id="disqus_thread"></div>
+         <script type="text/javascript">
+             var disqus_shortname = 'dbashford'; // required: replace example with your forum shortname
+             var disqus_identifier = '8'; // make sure to use the post.id as an identifier, otherwise disqus will use the pages url per default, which might be problematic...
+
+             /* * * DON'T EDIT BELOW THIS LINE * * */
+             (function() {
+                 var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                 dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                 (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+             })();
+         </script>
+         <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+         <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    </article>
+
+</main>
+
+
+    <footer class="site-footer">
+        <a class="subscribe icon-feed" href="../rss/index.html"><span class="tooltip">Subscribe!</span></a>
+        <div class="inner">
+             <section class="poweredby">Proudly published with <a class="icon-ghost" href="http://ghost.org">Ghost</a></section>
+        </div>
+    </footer>
+
+    
+    <script src="../shared/vendor/jquery/jquery.js?v=b18736de91"></script>
+
+
+    <script type="text/javascript" src="../assets/js/jquery-1.9.1.min.js?v=b18736de91"></script>
+
+    
+
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=b18736de91"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=b18736de91"></script>
+
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-47434157-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+
+</body>
+</html>
