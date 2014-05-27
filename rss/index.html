@@ -1,5 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[David Bashford]]></title><description><![CDATA[A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.]]></description><link>http://127.0.0.1:2368/</link><generator>Ghost v0.4.0</generator><lastBuildDate>Fri, 14 Mar 2014 16:22:18 GMT</lastBuildDate><atom:link href="http://127.0.0.1:2368/rss/" rel="self" type="application/rss+xml"/><author><![CDATA[David Bashford]]></author><ttl>60</ttl><item><title><![CDATA[Using React with Backbone/Require.js/Bower/Mimosa, 1 line of config]]></title><description><![CDATA[<p>This week I rolled out a <a href='https://github.com/dbashford/mimosa-react' >React compiler</a> for <a href='http://mimosa.io/' >Mimosa</a>. To show off how well the Mimosa and <a href='https://github.com/facebook/react' >React</a> play together, and how easy it is to get started, I put a <a href='https://github.com/dbashford/MimosaReactBackboneTodoList' >demo Todo app</a> together, because, lets face it, its not a thing unless there's a Todo app.</p>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[David Bashford]]></title><description><![CDATA[A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.]]></description><link>http://127.0.0.1:2368/</link><generator>Ghost v0.4.0</generator><lastBuildDate>Tue, 27 May 2014 22:31:05 GMT</lastBuildDate><atom:link href="http://127.0.0.1:2368/rss/" rel="self" type="application/rss+xml"/><author><![CDATA[David Bashford]]></author><ttl>60</ttl><item><title><![CDATA[Adhoc Modules: Custom Tasks &amp; Baby Steps Towards Publishing Modules]]></title><description><![CDATA[<p>The <a href='https://github.com/dbashford/mimosa-adhoc-module' >adhoc-module</a> Mimosa module is real easy to use and makes adding custom build behavior a piece of cake.  It is also a <strong>great</strong> gateway to learning how to build Mimosa modules that you wish to deploy to NPM for community use.</p>
+
+<h2 id="needtrulycustombehaviorinyourbuild">Need Truly Custom Behavior in Your Build?</h2>
+
+<p>Need some really specific functionality built into your Mimosa build?  Maybe you need to do some install-time code manipulating.  Or maybe you need to be able to swap out values of JavaScript properties based on your target environment.  Possibly you have a deployable product and you need each deploy to vary slightly (different skin?) and you'd love Mimosa to handle that for you.</p>
+
+<p>Until recently, you had three options:</p>
+
+<ol>
+<li>You could hope the task you need to perform was available as a module already.  Most modules, though, are meant to be general in their function.  So you might strike out quickly here.  </li>
+<li>You could create your own module and stick it in NPM. That may not be desirable for you, though.  You may not want to have to maintain it, and you may not want to expose any of what you might be doing at work in the form of a module.  </li>
+<li>You could create a module locally, in your project or within your company's code repos, and <code>mimosa mod:install</code> it.  This introduces another build step, though.  Now all your developers have to make sure to <code>mod:install</code> a specific piece of code.  And it means you may have another repo to manage.</li>
+</ol>
+
+<h2 id="entertheadhocmodule">Enter the Adhoc Module</h2>
+
+<p>The <a href='https://github.com/dbashford/mimosa-adhoc-module' >adhoc-module</a> was released recently and it allows you to create modules within your code base and <code>require</code> them right into your project.</p>
+
+<p>This module has a dead simple config:</p>
+
+<pre><code>adhocModule: {  
+  modules: []
+}
+</code></pre>
+
+<p>The <code>modules</code> array should contain <code>require</code>d in stripped-down mimosa modules. </p>
+
+<p>You would include adhoc modules like this:</p>
+
+<pre><code>adhocModule: {  
+  modules: [
+      require('./scripts/perform-transforms'),
+    require('./scripts/deploy-to-heroku')
+  ]
+}
+</code></pre>
+
+<p>The paths above point at node code in the <code>./scripts</code> directory. That code must expose a <code>registration</code> function that serves the exact same function as the <code>registration</code> function of any module you have plugged into your project.</p>
+
+<p>In the case above, two modules are included. You can add as many as you wish.</p>
+
+<h2 id="whatisregistration">What is <code>registration</code>?</h2>
+
+<p>For a complete rundown of how <code>registration</code> works, check the <a href='http://dbashford.github.io/making-a-mimosa-module/index.html' >blog post on creating modules</a>. That post is much larger in scope, though, so you may just want to keep reading, I'll cover it here in brief.</p>
+
+<p>The <code>registration</code> function exposed by your adhoc modules is called as Mimosa is first starting up.  It is a Mimosa module's (and adhoc module's) means to associate the execution of some code with a specific step in a Mimosa build.</p>
+
+<p>The <code>registration</code> function is passed the <code>mimosaConfig</code> which contains the full configuration for your project's Mimosa process, including anything you've included in your own <code>mimosa-config.js/coffee</code>.  The <code>registration</code> function is also passed a <code>register</code> function which when executed with the right parameters will notify Mimosa that it needs to call your code at a given point in Mimosa's processing.</p>
+
+<p><code>register</code> takes 4 parameters and when executed it plugs your code into the right place in Mimosa's processing.</p>
+
+<ul>
+<li>The 1st parameter tells Mimosa during which build workflow the passed callback (3rd parameter) should be executed.  The <a href='http://mimosa.io/modules.html' #create">Mimosa web site</a> covers all the various build workflows. Workflows include <code>add</code>/<code>update</code>/<code>remove</code>, <code>buildFile</code>, <code>buildDone</code>, and so on.</li>
+<li>The 2nd parameter tells Mimosa what step during the workflow to execute the callback.  Each workflow has a set of steps like <code>beforeRead</code>, <code>afterCompile</code>, and <code>package</code>. The complete set of workflow/steps can be seen by <a href='https://github.com/dbashford/mimosa/blob/master/src/util/workflow.coffee' #L19-L30">checking out the code</a>.</li>
+<li>The 3rd parameter is the callback.  This should be a reference to a JavaScript function that contains the code you want to execute at the specific build workflow and build step.  The callback is passed the <code>mimosaConfig</code>, an <code>options</code> object that contains information any files being currently processed, and a callback that is to be called when the module has finished its task.</li>
+<li>The 4th parameter is optional.  If your adhoc module is meant to process individual files, like JavaScript files, this parameter is your chance to make sure that your callback is only called with the right files.  This parameter is an array of file extensions.  Ex: <code>['html','htm']</code>.</li>
+</ul>
+
+<h2 id="usingregistration">Using <code>registration</code></h2>
+
+<p>At my day job we use adhoc modules extensively. Here's a quick <code>registration</code> function for one of our adhoc modules.</p>
+
+<pre><code>var _execute = function( mimosaConfig, options, next ) {  
+  // do something
+  next();
+};
+
+var _clean = ...
+
+exports.registration = function( mimosaConfig, register ) {  
+  if ( mimosaConfig.isBuild &amp;&amp; mimosaConfig.isPackage ) {
+    register( ["postBuild"], "beforeInstall", _execute );
+  }
+  register( ['preClean'], 'init', _clean );
+};
+</code></pre>
+
+<p>You can see the <code>registration</code> function is only concerned with executing its code if the current process is a build (<code>mimosa build</code>) and if the <code>--package</code> flag has been used. In this case the <code>_execute</code> function is called during the <code>beforeInstall</code> step. This particular module (code omitted) performs transformations on server templates prior to deployment. Server-side code isn't usually in Mimosa's wheelhouse, but there's nothing stopping a Mimosa module from reading from the file system, making changes and writing back.</p>
+
+<p>This particular module also registers for the <code>preClean</code> step during which any assets it may have been responsible for writing during the <code>postBuild</code> step can be cleaned up.</p>
+
+<h2 id="useittolearnhowtobuildmodules">Use it to Learn How to Build Modules!</h2>
+
+<p>Using adhoc-modules locally is a <strong>great</strong> way to learn how to build larger modules that you may intend to distribute. It's super easy to get started.</p>
+
+<p>Just toss some code in a directory in your app, add <code>adhoc-module</code> to your node modules, wire up the config and you are off and running.  The hardest part to master is determining when to run your code. A little trial-and-error, printing out the <code>options</code> object will help out there.</p>]]></description><link>http://127.0.0.1:2368/placeholder/</link><guid isPermaLink="false">24ff5c36-b6b0-499e-ac3b-6541509b5923</guid><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Tue, 27 May 2014 22:13:06 GMT</pubDate></item><item><title><![CDATA[Using React with Backbone/Require.js/Bower/Mimosa, 1 line of config]]></title><description><![CDATA[<p>This week I rolled out a <a href='https://github.com/dbashford/mimosa-react' >React compiler</a> for <a href='http://mimosa.io/' >Mimosa</a>. To show off how well the Mimosa and <a href='https://github.com/facebook/react' >React</a> play together, and how easy it is to get started, I put a <a href='https://github.com/dbashford/MimosaReactBackboneTodoList' >demo Todo app</a> together, because, lets face it, its not a thing unless there's a Todo app.</p>
 
 <p>The <a href='https://github.com/dbashford/MimosaReactBackboneTodoList' >demo Todo app</a> is a Backbone project that uses React for views,  Require.js for module loading and Bower for dependency management. That is all managed by Mimosa, the build tool, which also kicks in server support, live reload, JSX compiling, JSHinting, concatenation and minification.</p>
 
@@ -109,7 +194,9 @@
 <li><code>cd react</code>  </li>
 <li><code>mimosa watch --server</code> or <code>mimosa watch -s</code>  </li>
 <li>Open <a href='http://localhost:3000/' >localhost:3000</a></li>
-</ol>]]></description><link>http://127.0.0.1:2368/using-react-with-backbonerequire-jsbowermimosa-1-line-of-config/</link><guid isPermaLink="false">dcb6c398-4f70-4706-b28a-c173b2f0838f</guid><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Fri, 14 Mar 2014 16:15:54 GMT</pubDate></item><item><title><![CDATA[ember.js, es6 modules, and some unfortunate transpiler behavior]]></title><description><![CDATA[<h3 id="itsembersfault">It's Ember's Fault</h3>
+</ol>
+
+<p>Enjoy!  Any questions, just ask!</p>]]></description><link>http://127.0.0.1:2368/using-react-with-backbonerequire-jsbowermimosa-1-line-of-config/</link><guid isPermaLink="false">dcb6c398-4f70-4706-b28a-c173b2f0838f</guid><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Fri, 14 Mar 2014 16:15:54 GMT</pubDate></item><item><title><![CDATA[ember.js, es6 modules, and some unfortunate transpiler behavior]]></title><description><![CDATA[<h3 id="itsembersfault">It's Ember's Fault</h3>
 
 <p>In January my team at <a href='http://bericotechnologies.com/' >Berico</a> started doing a lot of work with <a href='http://emberjs.com/' >Ember</a>. We'll probably have a good dozen folks writing Ember apps in the near future. Ember has a steep learning curve, but the higher up that curve we get, the happier we are with the decision. There is just a tremendous amount of power there.</p>
 
