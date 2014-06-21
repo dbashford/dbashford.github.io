@@ -1,5 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[David Bashford]]></title><description><![CDATA[A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.]]></description><link>http://127.0.0.1:2368/</link><generator>Ghost v0.4.0</generator><lastBuildDate>Tue, 27 May 2014 22:33:20 GMT</lastBuildDate><atom:link href="http://127.0.0.1:2368/rss/" rel="self" type="application/rss+xml"/><author><![CDATA[David Bashford]]></author><ttl>60</ttl><item><title><![CDATA[Adhoc Modules: Custom Tasks &amp; Baby Steps Towards Publishing Modules]]></title><description><![CDATA[<p>The <a href='https://github.com/dbashford/mimosa-adhoc-module' >adhoc-module</a> Mimosa module is real easy to use and makes adding custom build behavior a piece of cake.  It is also a <strong>great</strong> gateway to learning how to build Mimosa modules that you wish to deploy to NPM for community use.</p>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[David Bashford]]></title><description><![CDATA[A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.]]></description><link>http://127.0.0.1:2368/</link><generator>Ghost v0.4.0</generator><lastBuildDate>Sat, 21 Jun 2014 19:54:35 GMT</lastBuildDate><atom:link href="http://127.0.0.1:2368/rss/" rel="self" type="application/rss+xml"/><author><![CDATA[David Bashford]]></author><ttl>60</ttl><item><title><![CDATA[Mimosa vs Gulp/Cake/Grunt/Broccoli?]]></title><description><![CDATA[<p><a href='https://twitter.com/MyCozyCloud' >@mycozycloud</a> put together a <a href='http://blog.cozycloud.cc/technic/2014/06/18/task-runners-comparison/' >blog post a few days back</a> that compared Grunt vs Cake vs Gulp vs Broccoli.  It filled up my Twitter feed yesterday.  JavaScript Daily posted it.  It blew up more.</p>
+
+<p>The winner? Broccoli. Why?</p>
+
+<blockquote>
+  <p>It’s the most flexible tool and the more concise one.</p>
+</blockquote>
+
+<h3 id="howdoesmimosastandup">How does Mimosa stand up?</h3>
+
+<p>It wins!</p>
+
+<p><a href='https://github.com/dbashford/MimosaJustACoffeeScriptFile' >Here's a repo with the example app.</a></p>
+
+<p>This is the config.</p>
+
+<pre><code>exports.config = {  
+  "modules": ["coffeescript", "coffeelint", "jshint"]
+}
+</code></pre>
+
+<p>3 actual lines. 2 real lines. It compiles the CoffeeScript file and tosses in inline source maps for free.</p>
+
+<h3 id="extracredit">Extra Credit</h3>
+
+<p>It will also run <a href='http://www.coffeelint.org/' >CoffeeLint</a> on the CoffeeScript and <a href='http://www.jshint.com/' >JSHint</a> on the compiled JavaScript. Go ahead, add a really long line of CoffeeScript and watch CoffeeLint tell you it doesn't care for it: <code>CoffeeLint: Line exceeds maximum allowed length</code>.  Then add <code>foo['bar'] = baz</code> and watch JSHint chide you: <code>['bar'] is better written in dot notation</code>. </p>
+
+<p>And with the extra functionality, the config stays shorter than all the others.</p>
+
+<h3 id="extraextracredit">Extra Extra Credit</h3>
+
+<p>Want to minify it?</p>
+
+<p>Add <code>minify-js</code> to the list of <code>modules</code>.  Run <code>mimosa build -m</code>.</p>
+
+<h3 id="problem">Problem</h3>
+
+<p>It was a verrrrrrrrrrrry simple, unrealistic test case that was used to compare the various tools.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>All this really proves is that given a very poor example, Mimosa blows away the competition for ease of use. The last thing I'm interested in doing is poking at the other tools based on this naive example.</p>
+
+<p>But still, no matter the use case, I think this makes it clear that Mimosa is a contender and is worth consideration.</p>]]></description><link>http://127.0.0.1:2368/mimosa-vs-the-others/</link><guid isPermaLink="false">731934ce-f8f5-4a87-9dad-78a338c81bdf</guid><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Sat, 21 Jun 2014 19:53:06 GMT</pubDate></item><item><title><![CDATA[Adhoc Modules: Custom Tasks &amp; Baby Steps Towards Publishing Modules]]></title><description><![CDATA[<p>The <a href='https://github.com/dbashford/mimosa-adhoc-module' >adhoc-module</a> Mimosa module is real easy to use and makes adding custom build behavior a piece of cake.  It is also a <strong>great</strong> gateway to learning how to build Mimosa modules that you wish to deploy to NPM for community use.</p>
 
 <h2 id="needtrulycustombehaviorinyourbuild">Need Truly Custom Behavior in Your Build?</h2>
 

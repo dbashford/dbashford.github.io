@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
     
-    <title>Mimosa 2.0 Released, 2.1 Queued Up | DC-based web developer</title>
+    <title>Mimosa vs Gulp/Cake/Grunt/Broccoli? | DC-based web developer</title>
     <meta name="description" content="Washington DC based Dad, UI architect, web developer and open source enthusiast. Creator of Mimosa." />
 
     <meta name="HandheldFriendly" content="True" />
@@ -26,7 +26,7 @@
 <link rel="alternate" type="application/rss+xml" title="David Bashford" href="../rss/index.html">
 <link rel="canonical" href="index.html" />
 </head>
-<body class="post-template tag-mimosa tag-mimosarelease">
+<body class="post-template">
 
     
 
@@ -51,7 +51,7 @@
  
 <main class="content" role="main">
 
-    <article class="post tag-mimosa tag-mimosarelease">
+    <article class="post">
 
         
 
@@ -60,37 +60,53 @@
         
         
 
-            <h1 class="post-title">Mimosa 2.0 Released, 2.1 Queued Up</h1>
-            <span class="post-meta">Published <time datetime="2014-01-26">January 26, 2014</time>. Tags: mimosa, mimosarelease</span>
+            <h1 class="post-title">Mimosa vs Gulp/Cake/Grunt/Broccoli?</h1>
+            <span class="post-meta">Published <time datetime="2014-06-21">June 21, 2014</time>. </span>
             <section class="post-content">
-                <p>This week <a href="http://mimosa.io">Mimosa 2.0</a> was released. I'm exited to get this release out as it makes Mimosa leaner, meaner, easier to reason about for its users and its maintainer, and a ton easier to maintain long-term.</p>
+                <p><a href="https://twitter.com/MyCozyCloud">@mycozycloud</a> put together a <a href="http://blog.cozycloud.cc/technic/2014/06/18/task-runners-comparison/">blog post a few days back</a> that compared Grunt vs Cake vs Gulp vs Broccoli.  It filled up my Twitter feed yesterday.  JavaScript Daily posted it.  It blew up more.</p>
 
-<h3 id="compilerrefactor">Compiler Refactor</h3>
+<p>The winner? Broccoli. Why?</p>
 
-<p>The biggest change with this major release is the extraction of all of Mimosa's compilers out of Mimosa's core and into separate Mimosa modules. The only drawback of this change is that you now have to list your compilers in <code>mimosa-config</code>'s <code>modules</code> array. A little less magic isn't a bad thing.</p>
+<blockquote>
+  <p>It’s the most flexible tool and the more concise one.</p>
+</blockquote>
 
-<p>But the advantages are many.</p>
+<h3 id="howdoesmimosastandup">How does Mimosa stand up?</h3>
 
-<ol>
-<li><p>It is now super easy to many compilers of your own. Before, a new compiler would have required a pull request to Mimosa. If you want to, for instance, create an <a href="https://github.com/dbashford/mimosa/issues/248">EmberScript compiler</a> well, that just got easier. And there are bunches of existing compiler modules to use as examples.</p></li>
-<li><p>Mimosa now takes a lot less time to download. I heard more than a few times that <code>npm install</code>ing Mimosa felt a bit like you were downloading all of NPM. Yanking out the compilers reduced install time by 60-70%. As more compilers get developed Mimosa's dependency bloat would have only worsened.</p></li>
-<li><p>Maintaining and impoving compilers can now happen apart from Mimosa itself. If a single compiler gets upgraded, it won't require a new version of Mimosa to be released.</p></li>
-<li><p>Mimosa core is smaller. The smaller and more modular it gets the less time I spend working on Mimosa's core and the more time I spend building out the modules my team and those others using Mimosa need.</p></li>
-</ol>
+<p>It wins!</p>
 
-<p>Some of the old config, like <code>compilers</code> and <code>templates.handlebars</code> has been moved to their logical locations. Each compiler manages its own extensions and overrides for the compiler library if specific versions are needed.</p>
+<p><a href="https://github.com/dbashford/MimosaJustACoffeeScriptFile">Here's a repo with the example app.</a></p>
 
-<p>After having updated a dozen or so projects to <code>2.0</code> I can say that these changes generally mean less config and a config that makes more sense.</p>
+<p>This is the config.</p>
 
-<p>There were plenty of other tweaks and fixes. For a comprehensive list of all that went into <code>2.0</code>, check out the <a href="https://github.com/dbashford/mimosa/blob/master/RELEASENOTES.md">Release Notes</a>.</p>
+<pre><code>exports.config = {  
+  "modules": ["coffeescript", "coffeelint", "jshint"]
+}
+</code></pre>
 
-<h3 id="21">2.1</h3>
+<p>3 actual lines. 2 real lines. It compiles the CoffeeScript file and tosses in inline source maps for free.</p>
 
-<p>Work on <code>2.1</code> will start shortly and it'll be heavily logging focused. After not getting much love or attention since the beginning, there has been a lot of feedback that logging needs to get better and more flexible, <a href="https://github.com/dbashford/mimosa/issues?labels=2.1&amp;page=1&amp;state=open">and it will</a>.</p>
+<h3 id="extracredit">Extra Credit</h3>
 
-<h3 id="feedback">Feedback</h3>
+<p>It will also run <a href="http://www.coffeelint.org/">CoffeeLint</a> on the CoffeeScript and <a href="http://www.jshint.com/">JSHint</a> on the compiled JavaScript. Go ahead, add a really long line of CoffeeScript and watch CoffeeLint tell you it doesn't care for it: <code>CoffeeLint: Line exceeds maximum allowed length</code>.  Then add <code>foo['bar'] = baz</code> and watch JSHint chide you: <code>['bar'] is better written in dot notation</code>. </p>
 
-<p>I love hearing what people are doing with Mimosa and helping folks through any trouble they may have. Shoot me a note <a href="https://twitter.com/mimosajs/">@mimosajs</a>, or hit the <a href="https://groups.google.com/forum/#!forum/mimosajs">Google Groups</a> or just make a <a href="https://github.com/dbashford/mimosa/issues">GitHub issue</a> to discuss what is on your mind.</p>
+<p>And with the extra functionality, the config stays shorter than all the others.</p>
+
+<h3 id="extraextracredit">Extra Extra Credit</h3>
+
+<p>Want to minify it?</p>
+
+<p>Add <code>minify-js</code> to the list of <code>modules</code>.  Run <code>mimosa build -m</code>.</p>
+
+<h3 id="problem">Problem</h3>
+
+<p>It was a verrrrrrrrrrrry simple, unrealistic test case that was used to compare the various tools.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>All this really proves is that given a very poor example, Mimosa blows away the competition for ease of use. The last thing I'm interested in doing is poking at the other tools based on this naive example.</p>
+
+<p>But still, no matter the use case, I think this makes it clear that Mimosa is a contender and is worth consideration.</p>
             </section>
             <footer class="post-footer">
 
@@ -101,7 +117,7 @@
         <div id="disqus_thread"></div>
          <script type="text/javascript">
              var disqus_shortname = 'dbashford'; // required: replace example with your forum shortname
-             var disqus_identifier = '3'; // make sure to use the post.id as an identifier, otherwise disqus will use the pages url per default, which might be problematic...
+             var disqus_identifier = '10'; // make sure to use the post.id as an identifier, otherwise disqus will use the pages url per default, which might be problematic...
 
              /* * * DON'T EDIT BELOW THIS LINE * * */
              (function() {
