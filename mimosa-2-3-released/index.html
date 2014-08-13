@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+    <title>Mimosa 2.3 Released | DC-based web developer</title>
+    <meta name="description" content="Washington DC based Dad, UI architect, web developer and open source enthusiast. Creator of Mimosa." />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=e57317518a" />
+    <link rel="stylesheet" type="text/css" href="../assets/font-awesome-4.0.3/css/font-awesome.min.css?v=e57317518a" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Noto+Serif:400,700,400italic|Open+Sans:700,400" />
+
+
+    
+    <meta name="generator" content="Ghost 0.4" />
+<link rel="alternate" type="application/rss+xml" title="David Bashford" href="../rss/index.html">
+<link rel="canonical" href="index.html" />
+</head>
+<body class="post-template">
+
+    
+
+    
+    
+
+
+
+    <header class="site-head" >
+
+        
+        <div class="vertical">
+            <div class="site-head-content inner">
+                <a class="blog-logo" href="../index.html"><img src="../content/images/2014/Jan/dbashford_avatar.png" alt="Blog Logo" /></a>
+                <h1 class="blog-title">David Bashford</h1>
+                <h2 class="blog-description">A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.</h2>
+    	          <div class="blog-description"><a href="http://www.twitter.com/dkbashford/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>&nbsp;&nbsp;<a href="https://github.com/dbashford"><i class="fa fa-github-square fa-fw"></i></a>&nbsp;&nbsp;<a href="http://www.twitter.com/mimosajs/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>
+            </div>
+        </div>
+    </header>
+
+ 
+<main class="content" role="main">
+
+    <article class="post">
+
+        
+
+
+
+        
+        
+
+            <h1 class="post-title">Mimosa 2.3 Released</h1>
+            <span class="post-meta">Published <time datetime="2014-08-12">August 12, 2014</time>. </span>
+            <section class="post-content">
+                <p>Today I released Mimosa <code>2.3</code>.  After 21 point releases on <code>2.2</code>, this marks the first non-patch release in awhile.  Here's a quick rundown of what to expect.</p>
+
+<h3 id="fixforchromecsslivereload">Fix for Chrome + CSS Live Reload</h3>
+
+<p>Mimosa's live reload module is capable of updating CSS without needing to reload the page.  It does this by altering the URL to force a reload of the asset from the server.  When the asset is loaded the new CSS is reevaluated and the page is repainted.</p>
+
+<p>Some months back there were changes to how and when Chrome loaded, evaluated and repainted the page when CSS assets were updated. Chrome loads the updated CSS when expected, evaluates it, but does not affect a repaint unless the browser window has focus. If you have the browser behind your editor or on another monitor, you'd need to wave your mouse over Chrome to see the change happen. That is better than no live reload at all, but not not quite the same.</p>
+
+<p>It took a couple stabs at it before finally coming up with the right hack to get this back to normal. Previously a query parameter was tweaked to force the CSS to reload.  With the latest version of <a href="https://github.com/dbashford/mimosa-live-reload">mimosa-live-reload</a> the query parameter was not cutting it.</p>
+
+<p>Now, just in Chrome (other browsers never stopped working) the CSS URLs are outright broken and then fixed. That convinces Chrome to do the repaint regardless of focus.</p>
+
+<p>The small downside of this is you'll see a 404 in your debugger for the split second.  But the net effect is the instant updating live reload you'd expect.</p>
+
+<h3 id="updatesformimosanew">Updates for <code>mimosa new</code></h3>
+
+<p>Since before <code>1.0</code> was released, very little has been changed for the <code>mimosa new</code> command.  It went through a minor refactor that didn't result in any functionality or behavior changes, but that's it.</p>
+
+<p>This release sees big updates to the servers you can get from <code>mimosa new</code>.</p>
+
+<h4 id="gettinghapi">Getting Hapi</h4>
+
+<p><a href="http://hapijs.com/">Hapi</a> has been added as a server option. I've been playing around with Hapi myself and have enjoyed working with it. Now with <code>mimosa new</code> you can get a Hapi server delivered and ready to go for any of the 6 server templating options <code>mimosa new</code> supports.  </p>
+
+<script src="https://gist.github.com/dbashford/9ae1268561e88cdbd883.js"></script>
+
+<p>Additionally a <a href="https://github.com/rclayton/mimosa-browserify-hapi-angular">new skeleton</a> has been created that incorporates Hapi along with Angular.js and Browserify.</p>
+
+<h4 id="updatingexpress">Updating Express</h4>
+
+<p>The existing <a href="http://expressjs.com/">Express</a> server received a huge overhaul.  It's now up to date with the latest Express <code>4.7.2</code> after being stuck at <code>3.4</code> for awhile.  Additionally all of the other dependencies have been updated to the latest and any required code changes as a result of those updates have been included.</p>
+
+<h4 id="addingexpresssocketio">Adding Express + Socket.io</h4>
+
+<p>New with <code>2.3</code> is an Express server that comes with <a href="http://socket.io/">Socket.io</a>. Some of the most frequent questions I get are how to get socket.io set up with Mimosa such that Mimosa's live reload uses it. This new server option comes with that already set up.</p>
+
+<h3 id="newrpmpackagingmodule">New RPM Packaging Module</h3>
+
+<p><a href="https://github.com/dretay/mimosa-rpm-package">mimosa-rpm-package</a> works much like the popular web-package module, but uses <a href="https://github.com/panitw/easy-rpm">easy-rpm</a> to create an RPM archive of an application.</p>
+
+<h3 id="serverreloadfixedup">server-reload Fixed Up</h3>
+
+<p><a href="https://github.com/dbashford/mimosa-server-reload">mimosa-server-reload</a>, which will restart your node server when server assets change, has been plagued with timing issues going back to when it was created.  Like with the live-reload issue above, it took a few hacks to get it right, but the timing issue has been addressed.</p>
+
+<h3 id="acrosstheboardlibraryupdates">Across the Board Library Updates</h3>
+
+<p>Virtually every module (that I am responsible for) has had its dependencies updated.  Additionally those modules, like those responsible for <code>mimosa new</code> and the template compilers, now deliver the latest versions of client libraries and server assets.</p>
+
+<h3 id="alsofrom2220">Also, from <code>2.2.20</code></h3>
+
+<p>A few patch releases ago a small change to mimosa-require -- the module responsible for providing support for AMD/RequireJS applications (like optimization of assets, validation of paths) -- resulted in a 20% - 50% performance improvement for large (100+ file) applications.  Performance improvements will vary a bit depending on the sort of hardware you work with.</p>
+
+<h2 id="upnext">Up Next?</h2>
+
+<p>In the near-term:</p>
+
+<ul>
+<li>A few skeletons on the way including ones for Marionette and Ember, from myself and some others.</li>
+<li>A module for managing delivery of features via feature flags</li>
+<li>A module for managing ember.js module imports, a build-tool "resolver" of sorts, that will determine what files need to be required for your Ember application and make sure you do not have to manage pulling them all in yourself</li>
+<li>Tests for existing modules.</li>
+</ul>
+            </section>
+            <footer class="post-footer">
+
+            </footer>
+
+        
+
+        <div id="disqus_thread"></div>
+         <script type="text/javascript">
+             var disqus_shortname = 'dbashford'; // required: replace example with your forum shortname
+             var disqus_identifier = '11'; // make sure to use the post.id as an identifier, otherwise disqus will use the pages url per default, which might be problematic...
+
+             /* * * DON'T EDIT BELOW THIS LINE * * */
+             (function() {
+                 var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                 dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                 (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+             })();
+         </script>
+         <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+         <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    </article>
+
+</main>
+
+
+    <footer class="site-footer">
+        <a class="subscribe icon-feed" href="../rss/index.html"><span class="tooltip">Subscribe!</span></a>
+        <div class="inner">
+             <section class="poweredby">Proudly published with <a class="icon-ghost" href="http://ghost.org">Ghost</a></section>
+        </div>
+    </footer>
+
+    
+    <script src="../shared/vendor/jquery/jquery.js?v=e57317518a"></script>
+
+
+    <script type="text/javascript" src="../assets/js/jquery-1.9.1.min.js?v=e57317518a"></script>
+
+    
+
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=e57317518a"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=e57317518a"></script>
+
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-47434157-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+
+</body>
+</html>

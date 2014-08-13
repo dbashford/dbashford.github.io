@@ -1,5 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[David Bashford]]></title><description><![CDATA[A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.]]></description><link>http://127.0.0.1:2368/</link><generator>Ghost v0.4.0</generator><lastBuildDate>Sat, 21 Jun 2014 19:54:35 GMT</lastBuildDate><atom:link href="http://127.0.0.1:2368/rss/" rel="self" type="application/rss+xml"/><author><![CDATA[David Bashford]]></author><ttl>60</ttl><item><title><![CDATA[Mimosa vs Gulp/Cake/Grunt/Broccoli?]]></title><description><![CDATA[<p><a href='https://twitter.com/MyCozyCloud' >@mycozycloud</a> put together a <a href='http://blog.cozycloud.cc/technic/2014/06/18/task-runners-comparison/' >blog post a few days back</a> that compared Grunt vs Cake vs Gulp vs Broccoli.  It filled up my Twitter feed yesterday.  JavaScript Daily posted it.  It blew up more.</p>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[David Bashford]]></title><description><![CDATA[A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.]]></description><link>http://127.0.0.1:2368/</link><generator>Ghost v0.4.0</generator><lastBuildDate>Wed, 13 Aug 2014 02:15:43 GMT</lastBuildDate><atom:link href="http://127.0.0.1:2368/rss/" rel="self" type="application/rss+xml"/><author><![CDATA[David Bashford]]></author><ttl>60</ttl><item><title><![CDATA[Mimosa 2.3 Released]]></title><description><![CDATA[<p>Today I released Mimosa <code>2.3</code>.  After 21 point releases on <code>2.2</code>, this marks the first non-patch release in awhile.  Here's a quick rundown of what to expect.</p>
+
+<h3 id="fixforchromecsslivereload">Fix for Chrome + CSS Live Reload</h3>
+
+<p>Mimosa's live reload module is capable of updating CSS without needing to reload the page.  It does this by altering the URL to force a reload of the asset from the server.  When the asset is loaded the new CSS is reevaluated and the page is repainted.</p>
+
+<p>Some months back there were changes to how and when Chrome loaded, evaluated and repainted the page when CSS assets were updated. Chrome loads the updated CSS when expected, evaluates it, but does not affect a repaint unless the browser window has focus. If you have the browser behind your editor or on another monitor, you'd need to wave your mouse over Chrome to see the change happen. That is better than no live reload at all, but not not quite the same.</p>
+
+<p>It took a couple stabs at it before finally coming up with the right hack to get this back to normal. Previously a query parameter was tweaked to force the CSS to reload.  With the latest version of <a href='https://github.com/dbashford/mimosa-live-reload' >mimosa-live-reload</a> the query parameter was not cutting it.</p>
+
+<p>Now, just in Chrome (other browsers never stopped working) the CSS URLs are outright broken and then fixed. That convinces Chrome to do the repaint regardless of focus.</p>
+
+<p>The small downside of this is you'll see a 404 in your debugger for the split second.  But the net effect is the instant updating live reload you'd expect.</p>
+
+<h3 id="updatesformimosanew">Updates for <code>mimosa new</code></h3>
+
+<p>Since before <code>1.0</code> was released, very little has been changed for the <code>mimosa new</code> command.  It went through a minor refactor that didn't result in any functionality or behavior changes, but that's it.</p>
+
+<p>This release sees big updates to the servers you can get from <code>mimosa new</code>.</p>
+
+<h4 id="gettinghapi">Getting Hapi</h4>
+
+<p><a href='http://hapijs.com/' >Hapi</a> has been added as a server option. I've been playing around with Hapi myself and have enjoyed working with it. Now with <code>mimosa new</code> you can get a Hapi server delivered and ready to go for any of the 6 server templating options <code>mimosa new</code> supports.  </p>
+
+<script src='https://gist.github.com/dbashford/9ae1268561e88cdbd883.js' ></script>
+
+<p>Additionally a <a href='https://github.com/rclayton/mimosa-browserify-hapi-angular' >new skeleton</a> has been created that incorporates Hapi along with Angular.js and Browserify.</p>
+
+<h4 id="updatingexpress">Updating Express</h4>
+
+<p>The existing <a href='http://expressjs.com/' >Express</a> server received a huge overhaul.  It's now up to date with the latest Express <code>4.7.2</code> after being stuck at <code>3.4</code> for awhile.  Additionally all of the other dependencies have been updated to the latest and any required code changes as a result of those updates have been included.</p>
+
+<h4 id="addingexpresssocketio">Adding Express + Socket.io</h4>
+
+<p>New with <code>2.3</code> is an Express server that comes with <a href='http://socket.io/' >Socket.io</a>. Some of the most frequent questions I get are how to get socket.io set up with Mimosa such that Mimosa's live reload uses it. This new server option comes with that already set up.</p>
+
+<h3 id="newrpmpackagingmodule">New RPM Packaging Module</h3>
+
+<p><a href='https://github.com/dretay/mimosa-rpm-package' >mimosa-rpm-package</a> works much like the popular web-package module, but uses <a href='https://github.com/panitw/easy-rpm' >easy-rpm</a> to create an RPM archive of an application.</p>
+
+<h3 id="serverreloadfixedup">server-reload Fixed Up</h3>
+
+<p><a href='https://github.com/dbashford/mimosa-server-reload' >mimosa-server-reload</a>, which will restart your node server when server assets change, has been plagued with timing issues going back to when it was created.  Like with the live-reload issue above, it took a few hacks to get it right, but the timing issue has been addressed.</p>
+
+<h3 id="acrosstheboardlibraryupdates">Across the Board Library Updates</h3>
+
+<p>Virtually every module (that I am responsible for) has had its dependencies updated.  Additionally those modules, like those responsible for <code>mimosa new</code> and the template compilers, now deliver the latest versions of client libraries and server assets.</p>
+
+<h3 id="alsofrom2220">Also, from <code>2.2.20</code></h3>
+
+<p>A few patch releases ago a small change to mimosa-require -- the module responsible for providing support for AMD/RequireJS applications (like optimization of assets, validation of paths) -- resulted in a 20% - 50% performance improvement for large (100+ file) applications.  Performance improvements will vary a bit depending on the sort of hardware you work with.</p>
+
+<h2 id="upnext">Up Next?</h2>
+
+<p>In the near-term:</p>
+
+<ul>
+<li>A few skeletons on the way including ones for Marionette and Ember, from myself and some others.</li>
+<li>A module for managing delivery of features via feature flags</li>
+<li>A module for managing ember.js module imports, a build-tool "resolver" of sorts, that will determine what files need to be required for your Ember application and make sure you do not have to manage pulling them all in yourself</li>
+<li>Tests for existing modules.</li>
+</ul>]]></description><link>http://127.0.0.1:2368/mimosa-2-3-released/</link><guid isPermaLink="false">4d2988e3-d471-4c68-bb5d-948fab51c0f8</guid><dc:creator><![CDATA[David Bashford]]></dc:creator><pubDate>Wed, 13 Aug 2014 00:22:06 GMT</pubDate></item><item><title><![CDATA[Mimosa vs Gulp/Cake/Grunt/Broccoli?]]></title><description><![CDATA[<p><a href='https://twitter.com/MyCozyCloud' >@mycozycloud</a> put together a <a href='http://blog.cozycloud.cc/technic/2014/06/18/task-runners-comparison/' >blog post a few days back</a> that compared Grunt vs Cake vs Gulp vs Broccoli.  It filled up my Twitter feed yesterday.  JavaScript Daily posted it.  It blew up more.</p>
 
 <p>The winner? Broccoli. Why?</p>
 
