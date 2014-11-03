@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+    <title>Enhanced Ember Mimosa tooling and a New Ember Skeleton | DC-based web developer</title>
+    <meta name="description" content="Washington DC based Dad, UI architect, web developer and open source enthusiast. Creator of Mimosa." />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=f273766f7b" />
+    <link rel="stylesheet" type="text/css" href="../assets/font-awesome-4.0.3/css/font-awesome.min.css?v=f273766f7b" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Noto+Serif:400,700,400italic|Open+Sans:700,400" />
+
+
+    
+    <meta name="generator" content="Ghost 0.4" />
+<link rel="alternate" type="application/rss+xml" title="David Bashford" href="../rss/index.html">
+<link rel="canonical" href="index.html" />
+</head>
+<body class="post-template">
+
+    
+
+    
+    
+
+
+
+    <header class="site-head" >
+
+        
+        <div class="vertical">
+            <div class="site-head-content inner">
+                <a class="blog-logo" href="../index.html"><img src="../content/images/2014/Jan/dbashford_avatar.png" alt="Blog Logo" /></a>
+                <h1 class="blog-title">David Bashford</h1>
+                <h2 class="blog-description">A web dev blog from a Washington DC based Dad, UI architect, web developer, and creator of <a href="http://mimosa.io">Mimosa</a>.</h2>
+    	          <div class="blog-description"><a href="http://www.twitter.com/dkbashford/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>&nbsp;&nbsp;<a href="https://github.com/dbashford"><i class="fa fa-github-square fa-fw"></i></a>&nbsp;&nbsp;<a href="http://www.twitter.com/mimosajs/" style="text-decoration:none;"><i class="fa fa-twitter-square fa-fw"></i></a>
+            </div>
+        </div>
+    </header>
+
+ 
+<main class="content" role="main">
+
+    <article class="post">
+
+        
+
+
+
+        
+        
+
+            <h1 class="post-title">Enhanced Ember Mimosa tooling and a New Ember Skeleton</h1>
+            <span class="post-meta">Published <time datetime="2014-11-03">November 03, 2014</time>. </span>
+            <section class="post-content">
+                <h3 id="tldr">TL;DR</h3>
+
+<p>I'm going to talk through a few new Mimosa modules that solve some tooling gaps with Ember, and then I'll quickly discuss a new Mimosa skeleton that brings it all together.  You can, though, skip the jibber-jabber and get <a href="https://github.com/dbashford/MimosaEmberSkeleton/">straight to the new Ember skeleton</a> and check out the result of all of this coming together.</p>
+
+<h1 id="mimosaandember">Mimosa and Ember</h1>
+
+<p>In January of this year we made the switch from Backbone to Ember.  We needed the power up and the team was ready to move on after two years writing a lot of boilerplate. After the initial, expected, much talked about learning curve was conquered the productivity boosts and code reduction we expected have arrived. When we were getting going, the tooling was already in place for Ember developers to use Mimosa to build their apps. </p>
+
+<p>Several modules catered to doing Ember work.</p>
+
+<ul>
+<li>An <a href="https://github.com/dbashford/mimosa-emblem">emblem compiler</a></li>
+<li>An <a href="https://github.com/dbashford/mimosa-ember-handlebars">ember-handlebars compiler</a></li>
+<li>A module that <a href="https://github.com/dbashford/mimosa-fix-rjs-ember">dealt with Ember's r.js build issues</a></li>
+<li>A <a href="https://github.com/dbashford/mimosa-es6-module-transpiler">transpiler for es6 module syntax</a> which the Ember community adopted very early on</li>
+<li><a href="https://github.com/neverfox/mimosa-testem-qunit">QUnit testing support</a> which is essential for testing Ember apps</li>
+</ul>
+
+<p>There were also several skeleton apps to get you started with Ember. They usually also include tasks like application packaging and CSS/JS transpiling:</p>
+
+<ul>
+<li>A <a href="https://github.com/breathe/mimosa-peepcode">port of the peepcode example app</a> which includes CoffeeScript and Emblem compilation among other things</li>
+<li>A <a href="https://github.com/brzpegasus/ember-repo-browser">GitHub repo browser</a> which included tests via Testem and a dependency bundler written by the <a href="https://github.com/brzpegasus">skeleton's author</a></li>
+<li>An <a href="https://github.com/dbashford/mimosa-ember-emblem-templates">example app using Emblem</a></li>
+<li>A <code>mimosa new</code> app <a href="https://github.com/emirotin/mimosa-ember">modified for Ember</a></li>
+<li>A <a href="https://github.com/JonET/mimosa-ember-commonjs">commonjs/browserify</a> example</li>
+</ul>
+
+<h2 id="toolinggaps">Tooling Gaps</h2>
+
+<p>I hesitated to attempt to solve any other Ember-specific tooling problems until we had a chance to really get going with a big Ember project.  After awhile, we began to see some big gaps that could be filled with some smart modules.</p>
+
+<p>The two big problems that needed module solutions were application wiring and Ember-specific testing support.</p>
+
+<h3 id="wiringupanemberapp">Wiring Up an Ember App</h3>
+
+<p>It is common to assign your <code>Ember.Application</code> instance to a global variable, and then define all of the framework factory classes (controllers, routes, views, etc.) as properties of this object:</p>
+
+<pre><code>window.App = Ember.Application.create();  
+App.PostsRoute = Ember.Route.extend();  
+App.PostsController = Ember.ArrayController.extend();  
+</code></pre>
+
+<p>Ember will be able to use the right components of your application at the right time. For instance, when you visit /posts, Ember will resolve the corresponding route, controller, view, and template by looking them up on the App namespace.</p>
+
+<p>To achieve this in a modular web application, you can choose to attach your Ember assets from within each individual module, or you can choose to bring all the modules together in one place and attach them all at once. </p>
+
+<h4 id="bringingtheapptothemodules">Bringing the App to the Modules</h4>
+
+<p><strong>views/post_view.js</strong>  </p>
+
+<pre><code>var App = require('app');  
+App.PostView = Ember.View.extend(...);  
+</code></pre>
+
+<p>In this case we're bringing the Ember application (<code>Ember.Application.create()</code>) to the <code>PostView</code> module.</p>
+
+<p>But this option is semantically wrong. A small component of an an application doesn't depend on the larger application.  The application depends on it.  And something still needs to <code>require</code>/<code>import</code> this view.  What would do that?</p>
+
+<h4 id="bringingthemodulestotheapp">Bringing the Modules to the App</h4>
+
+<p>A better approach is to create an application manifest file (of sorts) where the application and its modules are brought together and wired up. When solving this problem, we created a <code>modules.js</code> file that pulled together all the various Ember assets in one place and attached them to <code>App</code>. Doing this results in individual assets that know nothing about the larger application and are therefore more modular.</p>
+
+<p><strong>views/post_view.js</strong>  </p>
+
+<pre><code>var PostView = Ember.View.extend(...);  
+export default PostView;  
+</code></pre>
+
+<p>Here, rather than attaching to <code>App</code>, the view just exports itself.  Now anything that needs it (multiple apps? test harness?) can <code>import</code> it without needing the app.</p>
+
+<p>Here's the <code>modules.js</code> file where we pull the application together.</p>
+
+<p><strong>modules.js</strong>  </p>
+
+<pre><code>import App from 'app';
+
+import PostView from 'views/post_view';  
+App.PostView = PostView;
+
+import PostController from 'controllers/post_controller';  
+App.PostController = PostController;
+
+import Post from 'models/post';  
+App.Post = Post;  
+...
+</code></pre>
+
+<p>All the wiring of the various Ember assets occurs in a single place.  No bringing the app in as a dependency to every Ember asset.</p>
+
+<h4 id="butboilerplatemuch">But, boilerplate much?</h4>
+
+<p>Our production app's <code>modules.js</code> has around 600 lines and counting. Whenever a developer creates a new asset, they have to remember to go add it to that file.  It's not a huge hurdle, but given how boilerplate it is, it begs for a tooling solution...</p>
+
+<h3 id="mimosaembermoduleimport">mimosa-ember-module-import</h3>
+
+<p><a href="https://github.com/dbashford/mimosa-ember-module-import">mimosa-ember-module-import</a> was developed to solve the problem of <code>module</code> "manifest" creation. With a trivial amount of config (6 lines in the <a href="https://github.com/dbashford/MimosaEmberSkeleton/blob/master/mimosa-config.js#L52-L57">skeleton's case</a>) you can include this module and get your manifest file autogenerated during <code>mimosa build</code> and <code>mimosa watch</code>.</p>
+
+<p>The module will output a manifest file in AMD format by default, but it also supports spitting out CommonJS.  Here's an example manifest file in AMD.</p>
+
+<pre><code>define( function( require ) {  
+  var _0 = require('./views/post_view');
+  var _1 = require('./controllers/post_controller');
+  var _2 = require('./models/post');
+
+  var modules = {
+    PostView: _0 &amp;&amp; (_0['default'] || _0),
+    PostController: _1 &amp;&amp; (_1['default'] || _1),
+    Post: _2 &amp;&amp; (_2['default'] || _2),
+  };
+  return modules;
+});
+</code></pre>
+
+<p>This file can then be imported and used by Ember during app creation a few different ways.</p>
+
+<pre><code>import modules from 'modules';  
+import App from 'app'; // class not instance  
+App.createWithMixins(modules);  
+</code></pre>
+
+<p>...or...</p>
+
+<pre><code>import modules from 'modules';  
+var App = Ember.Application.extend(modules);  
+</code></pre>
+
+<h4 id="supportsmultipleapps">Supports Multiple Apps</h4>
+
+<p>Something that is lacking with other tools is an ability to support multiple apps in the same project.  We have that case so it was important all the tooling solutions supported it.  mimosa-ember-module-import supports multiple applications within a single project with a small tweak to the config.</p>
+
+<p><strong>Config with one app</strong></p>
+
+<pre><code>emberModuleImport: {  
+  apps: [{
+    namespace: "blogger",
+    manifestFile: "modules",
+    additional: ["router"]
+  }]
+}
+</code></pre>
+
+<p><strong>Config with two apps</strong></p>
+
+<pre><code>emberModuleImport: {  
+  apps: [{
+    namespace: "blogger",
+    manifestFile: "blogger-modules",
+    additional: ["router"]
+  }, {
+    namespace: "admin",
+    manifestFile: "admin-modules",
+    additional: ["router"]
+  }]
+}
+</code></pre>
+
+<p>It should be easy to see, adding more applications is as simple as adding another entry to the array.</p>
+
+<h3 id="testinganemberapp">Testing an Ember App</h3>
+
+<p><a href="https://github.com/dbashford/mimosa-testem-require">mimosa-testem-require</a> and its fork <a href="https://github.com/neverfox/mimosa-testem-qunit">mimosa-testem-qunit</a> both solve a lot of problems that come with writing browsers tests.  The goal of both is to allow you to Just Write Tests.  No need to waste time figuring out how to wire tests up and get the running.</p>
+
+<p>With Ember apps though, there's some additional work to do that is currently beyond those modules' capabilities.</p>
+
+<h4 id="mimosaembertest">mimosa-ember-test</h4>
+
+<p>mimosa-ember-test was created to double the support provided by the modules created before it.</p>
+
+<p>An important note, this module assumes require.js usage.  This module is about wiring together not only Ember's tests and testing support, but doing so in a require.js/AMD application. </p>
+
+<p>Below are some of the features of <a href="https://github.com/dbashford/mimosa-ember-test">mimosa-ember-test</a>.</p>
+
+<h4 id="continuedfrompreviousmodules">Continued from Previous Modules</h4>
+
+<p>The previous Mimosa testing modules included:</p>
+
+<ol>
+<li>Support for running tests during <code>build</code> and <code>watch</code>  </li>
+<li>Built on Testem, a first-class test runner.  </li>
+<li>Automatic wiring of testing assets into the <code>.mimosa</code> directory, far from your application's code.  </li>
+<li>Automatic detection and inclusion of tests  </li>
+<li>Built-in support for Sinon, Require.js (and QUnit in this module's case)  </li>
+<li>Command, <code>mimosa testscript</code>, to autogenerate script to run Testem interactive client  </li>
+<li><code>testem ci</code> support</li>
+</ol>
+
+<p>mimosa-ember-test continues all of this and builds onto it.</p>
+
+<h4 id="emberqunit">ember-qunit</h4>
+
+<p>An increasingly popular library to help you unit test your Ember apps is the aptly named <a href="https://github.com/rwjblue/ember-qunit">ember-qunit</a>.  It introduces helper functions which make writing Ember tests easier.  Any top notch Ember testing support needs to include ember-qunit, so any module we created to support Ember testing needed to include ember-qunit in its testing scaffolding.</p>
+
+<p>mimosa-ember-test includes ember-qunit in its test scaffolding and makes its functions globally available.</p>
+
+<h4 id="builtinbowersupportfortestingassets">Built-in Bower Support for Testing Assets</h4>
+
+<p>We wanted to make sure it was easy to update testing assets.  Previous modules would require you to either update specific test assets (like QUnit or Sinon) if you needed newer versions or submit pull requests to the module repo to update assets.</p>
+
+<p>mimosa-ember-test can, when configured (it is by default), utilize the functionality provided by mimosa-bower to Bower in your test assets. Toss the required dependencies in your <code>bower.json</code> and you are ready to go.</p>
+
+<pre><code>"devDependencies": {  
+  "qunit": "1.14.0",
+  "requirejs": "2.1.14",
+  "sinonjs": "1.10.2",
+  "ember-qunit":"0.1.8"
+}
+</code></pre>
+
+<p>If Bower isn't your thing, then mimosa-ember-test does come with its own versions of the test assets.  Turn Bower-ing of assets off (<code>bowerTestAssets:false</code>) and mimosa-ember-test will copy in the assets it has.  Biggest downside to this is that the ember-test module may, over time, fall slightly out of date.</p>
+
+<p>As with previous modules, you can copy in your own assets and tell mimosa-ember-test to not overwrite them.</p>
+
+<h4 id="multipleapps">Multiple Apps</h4>
+
+<p>As with the module-import module above, mimosa-ember-test supports multiple apps.  It will partition all test assets and scaffolding by app and will run each application's tests separately.  Additionally, the <code>mimosa testscript</code> will kick out scripts capable of running interactive tests for specific apps.</p>
+
+<h3 id="pulledtogetheremberskeleton">Pulled Together: Ember Skeleton</h3>
+
+<p>To show off some of the work we've done and to give ourselves a good starting point for our Ember development, we put together an <a href="https://github.com/dbashford/MimosaEmberSkeleton/">Ember Skeleton</a>.</p>
+
+<h4 id="gettheskeletonsetup">Get the Skeleton setup</h4>
+
+<p>Just a few steps. </p>
+
+<ul>
+<li><code>npm install -g mimosa</code></li>
+<li>git clone <a href='https://github.com/dbashford/MimosaEmberSkeleton/'>https://github.com/dbashford/MimosaEmberSkeleton/</a></li>
+<li>cd MimosaEmberSkeleton</li>
+<li><code>npm install</code></li>
+<li><code>mimosa build</code></li>
+</ul>
+
+<p><code>mimosa build</code> will pull in all the Mimosa modules not already in Mimosa.</p>
+
+<h4 id="modulemanifest">Module Manifest</h4>
+
+<p><code>mimosa build</code> will generate a <code>modules.js</code> file for the app that is configured.  Here's that output:</p>
+
+<pre><code>define( function( require ) {  
+  var _0 = require('./controllers/post_controller');
+  var _1 = require('./helpers/helpers');
+  var _2 = require('./router');
+  var _3 = require('./routes/post_route');
+  var _4 = require('./routes/posts_route');
+
+  var modules = {
+    PostController: _0 &amp;&amp; (_0['default'] || _0),
+    Helpers: _1 &amp;&amp; (_1['default'] || _1),
+    Router: _2 &amp;&amp; (_2['default'] || _2),
+    PostRoute: _3 &amp;&amp; (_3['default'] || _3),
+    PostsRoute: _4 &amp;&amp; (_4['default'] || _4)
+  };
+  return modules;
+});
+</code></pre>
+
+<p>The skeleton is also all wired up to use the modules.</p>
+
+<pre><code>require(['common'], function() {  
+  require(['app', 'blogger/modules'], function(App, modules) {
+    window.Blogger = App['default'].createWithMixins(modules);
+  });
+});
+</code></pre>
+
+<h4 id="tests">Tests</h4>
+
+<p>The skeleton app comes with some tests already written. <code>mimosa build</code> not only runs a full build of the app, it also, by default, executes the tests CI-style. Here's the messaging from the tests.</p>
+
+<pre><code>17:48:08 - Success - 4 of 4 tests passed for .mimosa/emberTest/tests/testem.json.  
+ok 1 PhantomJS 1.9 - Acceptances - Posts: displays all recent posts  
+ok 2 PhantomJS 1.9 - Unit - PostController: #init  
+ok 3 PhantomJS 1.9 - Unit - PostController: #edit  
+ok 4 PhantomJS 1.9 - Unit - PostController: #doneEdit
+
+1..4  
+# tests 4
+# pass  4
+# fail  0
+
+# ok
+</code></pre>
+
+<p>If you run <code>mimosa testscript</code>, you can get a script generated that when run will execute the interactive Testem UI.</p>
+
+<p><img src="https://cloud.githubusercontent.com/assets/581127/4690690/6c2b863c-56f5-11e4-81cb-103601cdbd11.png" alt="Testem UI" /></p>
+
+<h4 id="aboutrequirejs">About require.js</h4>
+
+<p>One of the biggest gripes about require.js is the syntax. I hope to address this in a future blog post, but this skeleton is an example of being able to use the best of require.js without a lot of the cruft. </p>
+
+<ul>
+<li>You aren't coding AMD. It's pure ES6.</li>
+<li>Mimosa understands require.js so that in many cases you do not.  This isn't more true than with an Ember app with its very simple dependency tree</li>
+<li>require.js allows you to only concatenate when you build.  You can develop with individual assets.  It doesn't matter how far source maps have come along, developing with optimized assets just isn't ideal.</li>
+<li>Mimosa manages configuration for concatenation for you. It can figure out most of the configuration. In the case of the skeleton, it just needs a little help to <a href="https://github.com/dbashford/MimosaEmberSkeleton/blob/833fa9f1d8e71421819fd84e2f2bbc53d6b01603/mimosa-config.js#L38-L47">swap in the production version of ember.js</a></li>
+</ul>
+
+<h4 id="everythingelseemberandnot">Everything Else, Ember and Not</h4>
+
+<p>This skeleton includes plenty of other modules, some of which enable Ember, some which do not.  I won't run down them all, but here are the highlights.</p>
+
+<ul>
+<li>It incorporates ember-handlebars template compilation which, like all Mimosa template compilers, will concatenate all the templates into a single file.  Multiple file support is just a few config params away</li>
+<li>The es6-module-transpiler is included and most modules are coded using ES6 module syntax which is compiled to AMD.</li>
+<li>Bower support is included and all vendor and test assets are Bower-ed in.</li>
+<li>JavaScript is hinted and the <code>.jshintrc</code> is already set up to expect all of QUnit and ember-qunit's global variables.</li>
+<li>SASS!</li>
+<li>An Express server complete with a module that will bounce that server when server code changes.  (A server isn't necessary, just included)</li>
+<li>Live Reload with no browser plugins</li>
+<li>Concatenation of vendor CSS</li>
+<li>Minification of JS, CSS and images.</li>
+<li>Packaging support, build your application with deployment in mind.</li>
+</ul>
+
+<p>And this is just what is included in this starter skeleton. Mimosa has <a href="https://www.npmjs.org/search?q=mimosa">plenty</a> of <a href="http://mimosa.io/modules.html#list">other modules</a> available.</p>
+
+<h4 id="solittleconfig">So Little Config</h4>
+
+<p>If Ember is your thing, then so are conventions.  By sticking to a few simple conventions you can wire your app up with very little configuration.  The skeleton has all of 93 lines of config and 30 of it is a very spaced out/commented array.  For what this skeleton can do, that's a tiny amount of configuration.</p>
+
+<h3 id="whymimosaforyouremberapplication">Why Mimosa for Your Ember Application?</h3>
+
+<p>Besides the support listed above, in general, why Mimosa?</p>
+
+<h4 id="generalpurposebutcustomizable">General Purpose but Customizable</h4>
+
+<p>I mentioned we moved from Backbone to Ember. That was a big change for our team. One thing that remained constant after the transition was Mimosa. Before making the switch ourselves, plenty of folks had been using Mimosa for their Ember apps, so all the support we needed to get going was already available.</p>
+
+<p>Mimosa is multi-purpose. It doesn't have anything to do with Ember, but modules can be built to solve any problem set, including Ember's.</p>
+
+<h4 id="asingletool">A Single Tool</h4>
+
+<p>If you need to add Grunt to your Mimosa app, it isn't because Mimosa isn't capable of doing what you need, it is because the module you need hasn't been built. (Try <a href="http://dbashford.github.io/making-a-mimosa-module/index.html">filling the gap</a>? Or <a href="https://github.com/dbashford/mimosa/issues/new">bring up your need</a>?)</p>
+
+<h4 id="stableandsupported">Stable and Supported</h4>
+
+<p>Mimosa may be new to you, but Mimosa isn't new. It predates many of the other tools. And I'm not going anywhere!</p>
+
+<h3 id="tryitout">Try it out!</h3>
+
+<p>If you have any feedback, hit me up.  </p>
+
+<p>If you have any ideas about how Mimosa's Ember support could be better, hit me up.</p>
+
+<h3 id="thanks">Thanks!</h3>
+
+<p>Special thanks to <a href="https://github.com/brzpegasus">Estelle DeBlois</a> for her help building the above modules and giving this post a thorough sanity check.  Her help has been invaluable!</p>
+
+<p>And thanks to my team at <a href="http://bericotechnologies.com/">Berico</a> for patiently waiting on the above modules to land!</p>
+            </section>
+            <footer class="post-footer">
+
+            </footer>
+
+        
+
+        <div id="disqus_thread"></div>
+         <script type="text/javascript">
+             var disqus_shortname = 'dbashford'; // required: replace example with your forum shortname
+             var disqus_identifier = '13'; // make sure to use the post.id as an identifier, otherwise disqus will use the pages url per default, which might be problematic...
+
+             /* * * DON'T EDIT BELOW THIS LINE * * */
+             (function() {
+                 var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                 dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                 (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+             })();
+         </script>
+         <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+         <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    </article>
+
+</main>
+
+
+    <footer class="site-footer">
+        <a class="subscribe icon-feed" href="../rss/index.html"><span class="tooltip">Subscribe!</span></a>
+        <div class="inner">
+             <section class="poweredby">Proudly published with <a class="icon-ghost" href="http://ghost.org">Ghost</a></section>
+        </div>
+    </footer>
+
+    
+    <script src="../shared/vendor/jquery/jquery.js?v=f273766f7b"></script>
+
+
+    <script type="text/javascript" src="../assets/js/jquery-1.9.1.min.js?v=f273766f7b"></script>
+
+    
+
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=f273766f7b"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=f273766f7b"></script>
+
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-47434157-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+
+</body>
+</html>
